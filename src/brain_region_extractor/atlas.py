@@ -31,3 +31,10 @@ def load_atlas_dictionary(path: Path) -> Atlas:
 
     regions = list(map(lambda row: AtlasRegion(row[region_name_index], int(row[region_value_index])), rows))
     return Atlas(headers, rows, regions)
+
+
+def print_atlas_regions(atlas_dictionary: Atlas):
+    print("Atlas regions:")
+
+    for region in atlas_dictionary.regions:
+        print(f"- {region.name} ({region.value})")

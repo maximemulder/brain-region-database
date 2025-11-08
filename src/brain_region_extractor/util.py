@@ -3,7 +3,7 @@ from typing import Never
 
 
 def print_error_exit(message: str) -> Never:
-    print(message, file=sys.stderr)
+    print(f"ERROR: {message}", file=sys.stderr)
     sys.exit(-1)
 
 

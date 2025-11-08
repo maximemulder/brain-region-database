@@ -7,13 +7,13 @@ from typing import Any
 
 import numpy as np
 
-from brain_region_extractor.atlas import AtlasRegion, load_atlas_dictionary
-from brain_region_extractor.nifti import convert_to_standard_space, is_in_standard_space, load_nifti_image
+from brain_region_extractor.atlas import AtlasRegion, load_atlas_dictionary, print_atlas_regions
+from brain_region_extractor.nifti import resample_to_standard_dims, has_standard_dims, load_nifti_image
 from brain_region_extractor.statistics import into_serializable
 from brain_region_extractor.util import print_warning
 
 # ruff: noqa
-# extract-brain-regions --atlas-image ../atlases/mni_icbm152_nlin_sym_09c_CerebrA_nifti/mni_icbm152_CerebrA_tal_nlin_sym_09c.nii --atlas-dictionary ../atlases/mni_icbm152_nlin_sym_09c_CerebrA_nifti/CerebrA_LabelDetails.csv --scan ../../COMP5411/demo_587630_V1_t1_001.nii
+# analyze-scan-regions --atlas-image ../atlases/mni_icbm152_nlin_sym_09c_CerebrA_nifti/mni_icbm152_CerebrA_tal_nlin_sym_09c.nii --atlas-dictionary ../atlases/mni_icbm152_nlin_sym_09c_CerebrA_nifti/CerebrA_LabelDetails.csv --scan ../../COMP5411/demo_587630_V1_t1_001.nii
 
 
 def main() -> None:
@@ -44,20 +44,17 @@ def main() -> None:
     atlas_image      = load_nifti_image(atlas_image_path)
     scan_image       = load_nifti_image(scan_path)
 
-    print("Atlas regions:")
+    print_atlas_regions(atlas_dictionary)
 
-    for region in atlas_dictionary.regions:
-        print(f"- {region.name} ({region.value})")
-
-    if not is_in_standard_space(atlas_image):
+    if not has_standard_dims(atlas_image):
         print("Resampling atlas to MNI space.")
-        atlas_image = convert_to_standard_space(atlas_image, 'nearest')
+        atlas_image = resample_to_standard_dims(atlas_image, 'nearest')
     else:
         print("Atlas is already in MNI space.")
 
-    if not is_in_standard_space(scan_image):
+    if not has_standard_dims(scan_image):
         print("Resampling image to MNI space.")
-        scan_image = convert_to_standard_space(scan_image, 'continuous')
+        scan_image = resample_to_standard_dims(scan_image, 'continuous')
     else:
         print("Image is already in MNI space.")
 
@@ -107,5 +104,5 @@ def collect_region_statistics(
     }
 
 
-if __name__ == "main":
+if __name__ == '__main__':
     main()

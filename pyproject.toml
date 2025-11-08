@@ -18,7 +18,9 @@ dev = [
 ]
 
 [project.scripts]
-extract-brain-regions = "brain_region_extractor.extract_brain_regions:main"
+analyze-scan-regions = "brain_region_extractor.scripts.analyze_scan_regions:main"
+extract-scan-regions = "brain_region_extractor.scripts.extract_scan_regions:main"
+patch-scan           = "brain_region_extractor.scripts.patch_scan:main"
 
 [tool.ruff]
 line-length = 120
