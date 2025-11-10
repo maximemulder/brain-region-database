@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from brain_region_extractor.atlas import AtlasRegion, load_atlas_dictionary, print_atlas_regions
-from brain_region_extractor.nifti import resample_to_standard_dims, has_standard_dims, load_nifti_image
+from brain_region_extractor.nifti import VoxelData3D, VoxelMask3D, resample_to_standard_dims, has_standard_dims, load_nifti_image
 from brain_region_extractor.statistics import RegionStatistics
 from brain_region_extractor.util import print_warning
 
@@ -88,8 +88,8 @@ def main() -> None:
 
 def collect_region_statistics(
     region: AtlasRegion,
-    region_mask: np.ndarray[tuple[int, int, int], np.dtype[np.bool_]],
-    region_scan_data: np.ndarray[tuple[int, int, int], np.dtype[np.float32]],
+    region_mask: VoxelMask3D,
+    region_scan_data: VoxelData3D,
 ) -> RegionStatistics:
     return RegionStatistics(
         name=region.name,

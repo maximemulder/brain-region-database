@@ -14,6 +14,10 @@ type NiftiImage = Nifti1Image | Nifti2Image
 
 type Interpolation = Literal['nearest', 'continuous']
 
+type VoxelData3D = np.ndarray[tuple[int, int, int], np.dtype[np.float32]]
+
+type VoxelMask3D = np.ndarray[tuple[int, int, int], np.dtype[np.bool_]]
+
 
 def load_nifti_image(path: Path) -> NiftiImage:
     image = nib.load(path)  # type: ignore
@@ -24,11 +28,11 @@ def load_nifti_image(path: Path) -> NiftiImage:
 
 
 def has_standard_dims(image: NiftiImage) -> bool:
-    return has_same_dims(load_mni152_template())  # type: ignore
+    return has_same_dims(image, load_mni152_template())  # type: ignore
 
 
 def resample_to_standard_dims(image: NiftiImage, interpolation: Interpolation) -> NiftiImage:
-    return resample_to_same_dims(load_mni152_template())  # type: ignore
+    return resample_to_same_dims(image, load_mni152_template(), interpolation)  # type: ignore
 
 
 def has_same_dims(image: NiftiImage, template: NiftiImage) -> bool:
