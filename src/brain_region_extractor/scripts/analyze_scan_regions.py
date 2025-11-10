@@ -61,7 +61,7 @@ def main() -> None:
 
         regions_statistics[region.name] = collect_region_statistics(region, atlas_data, scan_data)
 
-    print(json.dumps({region_name: region_statistics.to_json() for region_name, region_statistics in regions_statistics.items()}, indent=4))
+    print(json.dumps({region_name: region_statistics.model_dump() for region_name, region_statistics in regions_statistics.items()}, indent=4))
 
 
 def collect_region_statistics(
