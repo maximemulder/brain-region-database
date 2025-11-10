@@ -3,13 +3,12 @@
 import argparse
 import json
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 
 from brain_region_extractor.atlas import AtlasRegion, load_atlas_dictionary, print_atlas_regions
 from brain_region_extractor.nifti import resample_to_standard_dims, has_standard_dims, load_nifti_image
-from brain_region_extractor.statistics import into_serializable
+from brain_region_extractor.statistics import RegionStatistics
 from brain_region_extractor.util import print_warning
 
 # ruff: noqa
@@ -62,7 +61,7 @@ def main() -> None:
     scan_data  = scan_image.get_fdata()
 
     # Dictionary to store region statistics
-    regions_statistics = {}
+    regions_statistics: dict[str, RegionStatistics] = {}
 
     for region in atlas_dictionary.regions:
         print(f"Processing region '{region.name}' ({region.value})")
@@ -84,24 +83,24 @@ def main() -> None:
 
         regions_statistics[region.name] = collect_region_statistics(region, region_mask, region_scan_data)
 
-    print(json.dumps(into_serializable(regions_statistics), indent=4))
+    print(json.dumps({region_name: region_statistics.to_json() for region_name, region_statistics in regions_statistics.items()}, indent=4))
 
 
 def collect_region_statistics(
     region: AtlasRegion,
-    region_mask: np.ndarray,
-    region_scan_data: np.ndarray,
-) -> dict[str, Any]:
-    return {
-        'name': region.name,
-        'value': region.value,
-        'voxel_count': np.sum(region_mask),
-        'mean_intensity': np.mean(region_scan_data),
-        'std_intensity': np.std(region_scan_data),
-        'min_intensity': np.min(region_scan_data),
-        'max_intensity': np.max(region_scan_data),
-        'median_intensity': np.median(region_scan_data),
-    }
+    region_mask: np.ndarray[tuple[int, int, int], np.dtype[np.bool_]],
+    region_scan_data: np.ndarray[tuple[int, int, int], np.dtype[np.float32]],
+) -> RegionStatistics:
+    return RegionStatistics(
+        name=region.name,
+        value=region.value,
+        voxel_count=np.sum(region_mask).item(),
+        mean_intensity=np.mean(region_scan_data).item(),
+        std_intensity=np.std(region_scan_data).item(),
+        min_intensity=np.min(region_scan_data).item(),
+        max_intensity=np.max(region_scan_data).item(),
+        median_intensity=np.median(region_scan_data).item(),
+    )
 
 
 if __name__ == '__main__':
