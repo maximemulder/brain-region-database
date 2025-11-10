@@ -8,7 +8,7 @@ class Base(DeclarativeBase):
     pass
 
 
-class Scan(Base):
+class DBScan(Base):
     __tablename__ = 'scan'
 
     id         : Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -18,17 +18,17 @@ class Scan(Base):
     voxel_size : Mapped[str]
 
     # Relationships
-    regions: Mapped[list['ScanRegion']] = relationship(back_populates='scan')
+    regions: Mapped[list['DBScanRegion']] = relationship(back_populates='scan')
 
 
-class ScanRegion(Base):
+class DBScanRegion(Base):
     __tablename__ = 'scan_region'
 
     id      : Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     scan_id : Mapped[int] = mapped_column(ForeignKey('scan.id'))
 
     # Region atlas properties
-    name  :  Mapped[str]
+    name  : Mapped[str]
     value : Mapped[int]
 
     # Region numeric properties
@@ -41,7 +41,7 @@ class ScanRegion(Base):
 
     # Geometric properties
     centroid     : Mapped[str] = mapped_column(Geometry('POINTZ', srid=4326),)
-    bounding_box : Mapped[str] = mapped_column(Geometry('POLYHEDRALSURFACEZ', srid=4326))
+    bounding_box : Mapped[str] = mapped_column(Geometry('BOX3D', srid=4326))
 
     # Relationships
-    mri_scan: Mapped['Scan'] = relationship(back_populates='regions')
+    mri_scan: Mapped['DBScan'] = relationship(back_populates='regions')

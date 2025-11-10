@@ -6,7 +6,7 @@ from sqlalchemy import URL, Engine, create_engine, text
 from sqlalchemy.dialects.postgresql import dialect as postgresql_dialect
 from sqlalchemy.schema import CreateTable
 
-from brain_region_extractor.database import Base
+from brain_region_extractor.database.models import Base
 from brain_region_extractor.util import print_error_exit, read_environment_variable
 
 

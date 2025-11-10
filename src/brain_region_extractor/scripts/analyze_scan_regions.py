@@ -8,7 +8,7 @@ import numpy as np
 
 from brain_region_extractor.atlas import AtlasRegion, load_atlas_dictionary, print_atlas_regions
 from brain_region_extractor.nifti import NDArray3, has_same_dims, resample_to_same_dims, load_nifti_image
-from brain_region_extractor.statistics import RegionStatistics
+from brain_region_extractor.scan import Point3D, ScanRegion
 
 # ruff: noqa
 # analyze-scan-regions --atlas-image ../atlases/mni_icbm152_nlin_sym_09c_CerebrA_nifti/mni_icbm152_CerebrA_tal_nlin_sym_09c.nii --atlas-dictionary ../atlases/mni_icbm152_nlin_sym_09c_CerebrA_nifti/CerebrA_LabelDetails.csv --scan ../../COMP5411/demo_587630_V1_t1_001.nii
@@ -54,7 +54,7 @@ def main() -> None:
     scan_data:  NDArray3[np.float32] = scan_image.get_fdata()
 
     # Dictionary to store region statistics
-    regions_statistics: dict[str, RegionStatistics] = {}
+    regions_statistics: dict[str, ScanRegion] = {}
 
     for region in atlas_dictionary.regions:
         print(f"Processing region '{region.name}' ({region.value})")
@@ -68,7 +68,7 @@ def collect_region_statistics(
     region: AtlasRegion,
     atlas_data: NDArray3[np.float32],
     scan_data: NDArray3[np.float32],
-) -> RegionStatistics:
+) -> ScanRegion:
     # Create the mask of the region.
     region_mask = (atlas_data == region.value)
 
@@ -85,7 +85,7 @@ def collect_region_statistics(
     min_bounding_box = np.min(region_coordinates, axis=0).astype(int)
     max_bounding_box = np.max(region_coordinates, axis=0).astype(int)
 
-    return RegionStatistics(
+    return ScanRegion(
         name=region.name,
         value=region.value,
         voxel_count=np.sum(region_mask).item(),
@@ -94,10 +94,10 @@ def collect_region_statistics(
         min_intensity=np.min(region_scan_data).item(),
         max_intensity=np.max(region_scan_data).item(),
         median_intensity=np.median(region_scan_data).item(),
-        centroid=tuple(centroid),
+        centroid=Point3D.from_array(centroid),
         bounding_box=(
-            tuple(x.item() for x in min_bounding_box),
-            tuple(x.item() for x in max_bounding_box),
+            Point3D.from_array(min_bounding_box),
+            Point3D.from_array(max_bounding_box),
         ),
     )
 
