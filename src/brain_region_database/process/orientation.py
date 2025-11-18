@@ -2,7 +2,7 @@ import numpy as np
 from nibabel.nifti1 import Nifti1Image
 from scipy.ndimage import map_coordinates  # type: ignore
 
-from brain_region_extractor.nifti import Interpolation, NiftiImage
+from brain_region_database.nifti import Interpolation, NiftiImage
 
 
 def reorient_nifti(image: NiftiImage, reference: NiftiImage, interpolation: Interpolation) -> NiftiImage:

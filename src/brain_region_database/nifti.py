@@ -7,7 +7,7 @@ from nibabel.nifti1 import Nifti1Image
 from nibabel.nifti2 import Nifti2Image
 from nilearn.image import resample_img  # type: ignore
 
-from brain_region_extractor.util import print_error_exit
+from brain_region_database.util import print_error_exit
 
 type NiftiImage = Nifti1Image | Nifti2Image
 

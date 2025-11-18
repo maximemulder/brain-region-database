@@ -8,10 +8,10 @@ from typing import TextIO
 
 from sqlalchemy.orm import Session
 
-from brain_region_extractor.database.engine import get_engine
-from brain_region_extractor.database.query import insert_scan, select_scan
-from brain_region_extractor.scan import Scan
-from brain_region_extractor.util import print_error_exit
+from brain_region_database.database.engine import get_engine
+from brain_region_database.database.query import insert_scan, select_scan
+from brain_region_database.scan import Scan
+from brain_region_database.util import print_error_exit
 
 
 def read_scan_json(text: TextIO) -> Scan:

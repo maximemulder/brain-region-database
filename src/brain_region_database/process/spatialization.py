@@ -1,6 +1,6 @@
 from nilearn.image import resample_img  # type: ignore
 
-from brain_region_extractor.nifti import Interpolation, NiftiImage
+from brain_region_database.nifti import Interpolation, NiftiImage
 
 
 def respatialize_nifti(image: NiftiImage, reference: NiftiImage, interpolation: Interpolation) -> NiftiImage:

@@ -2,7 +2,7 @@ import numpy as np
 from nibabel.nifti1 import Nifti1Image
 from skimage.transform import resize  # type: ignore
 
-from brain_region_extractor.nifti import Interpolation, NiftiImage
+from brain_region_database.nifti import Interpolation, NiftiImage
 
 
 def resize_nifti(nifti: NiftiImage, reference: NiftiImage, interpolation: Interpolation) -> NiftiImage:

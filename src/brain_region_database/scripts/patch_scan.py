@@ -8,12 +8,12 @@ import nibabel as nib
 import numpy as np
 from nibabel.nifti1 import Nifti1Image
 
-from brain_region_extractor.nifti import load_nifti_image
-from brain_region_extractor.process.orientation import reorient_nifti
-from brain_region_extractor.process.registration import register_nifti
-from brain_region_extractor.process.size import resize_nifti
-from brain_region_extractor.process.spatialization import respatialize_nifti
-from brain_region_extractor.util import print_error_exit
+from brain_region_database.nifti import load_nifti_image
+from brain_region_database.process.orientation import reorient_nifti
+from brain_region_database.process.registration import register_nifti
+from brain_region_database.process.size import resize_nifti
+from brain_region_database.process.spatialization import respatialize_nifti
+from brain_region_database.util import print_error_exit
 
 
 def main() -> None:

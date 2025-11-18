@@ -6,9 +6,9 @@ from pathlib import Path
 
 import numpy as np
 
-from brain_region_extractor.atlas import AtlasRegion, load_atlas_dictionary, print_atlas_regions
-from brain_region_extractor.nifti import NDArray3, get_voxel_size, has_same_dims, resample_to_same_dims, load_nifti_image
-from brain_region_extractor.scan import Point3D, Scan, ScanRegion
+from brain_region_database.atlas import AtlasRegion, load_atlas_dictionary, print_atlas_regions
+from brain_region_database.nifti import NDArray3, get_voxel_size, has_same_dims, resample_to_same_dims, load_nifti_image
+from brain_region_database.scan import Point3D, Scan, ScanRegion
 
 # ruff: noqa
 # analyze-scan-regions --atlas-image ../atlases/mni_icbm152_nlin_sym_09c_CerebrA_nifti/mni_icbm152_CerebrA_tal_nlin_sym_09c.nii --atlas-dictionary ../atlases/mni_icbm152_nlin_sym_09c_CerebrA_nifti/CerebrA_LabelDetails.csv --scan ../../COMP5411/demo_587630_V1_t1_001.nii

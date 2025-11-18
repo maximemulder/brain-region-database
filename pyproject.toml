@@ -3,7 +3,7 @@ requires = ["uv_build>=0.9.8"]
 build-backend = "uv_build"
 
 [project]
-name = "brain-region-extractor"
+name = "brain-region-database"
 version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
@@ -22,11 +22,11 @@ dev = [
 ]
 
 [project.scripts]
-analyze-scan-regions = "brain_region_extractor.scripts.analyze_scan_regions:main"
-create-database      = "brain_region_extractor.scripts.create_database:main"
-extract-scan-regions = "brain_region_extractor.scripts.extract_scan_regions:main"
-insert-scan          = "brain_region_extractor.scripts.insert_scan:main"
-patch-scan           = "brain_region_extractor.scripts.patch_scan:main"
+analyze-scan-regions = "brain_region_database.scripts.analyze_scan_regions:main"
+create-database      = "brain_region_database.scripts.create_database:main"
+extract-scan-regions = "brain_region_database.scripts.extract_scan_regions:main"
+insert-scan          = "brain_region_database.scripts.insert_scan:main"
+patch-scan           = "brain_region_database.scripts.patch_scan:main"
 
 [tool.ruff]
 line-length = 120

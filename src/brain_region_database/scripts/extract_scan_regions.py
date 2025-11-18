@@ -6,9 +6,9 @@ from pathlib import Path
 import nibabel as nib
 from nibabel.nifti1 import Nifti1Image
 
-from brain_region_extractor.atlas import load_atlas_dictionary, print_atlas_regions
-from brain_region_extractor.nifti import has_same_dims, load_nifti_image, resample_to_same_dims
-from brain_region_extractor.util import print_error_exit
+from brain_region_database.atlas import load_atlas_dictionary, print_atlas_regions
+from brain_region_database.nifti import has_same_dims, load_nifti_image, resample_to_same_dims
+from brain_region_database.util import print_error_exit
 
 # ruff: noqa
 # extract-scan-regions --atlas-image ../atlases/mni_icbm152_nlin_sym_09c_CerebrA_nifti/mni_icbm152_CerebrA_tal_nlin_sym_09c.nii --atlas-dictionary ../atlases/mni_icbm152_nlin_sym_09c_CerebrA_nifti/CerebrA_LabelDetails.csv --scan ../../COMP5411/demo_587630_V1_t1_001.nii

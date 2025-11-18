@@ -1,6 +1,6 @@
 from sqlalchemy import URL, Engine, create_engine
 
-from brain_region_extractor.util import read_environment_variable
+from brain_region_database.util import read_environment_variable
 
 
 def get_engine() -> Engine:

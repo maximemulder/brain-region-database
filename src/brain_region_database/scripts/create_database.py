@@ -6,9 +6,9 @@ from sqlalchemy import Engine, inspect, text
 from sqlalchemy.dialects.postgresql import dialect as postgresql_dialect
 from sqlalchemy.schema import CreateTable
 
-from brain_region_extractor.database.engine import get_engine
-from brain_region_extractor.database.models import Base
-from brain_region_extractor.util import print_error_exit
+from brain_region_database.database.engine import get_engine
+from brain_region_database.database.models import Base
+from brain_region_database.util import print_error_exit
 
 
 def create_database(engine: Engine):
