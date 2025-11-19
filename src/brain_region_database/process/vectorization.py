@@ -1,5 +1,3 @@
-from typing import cast
-
 import numpy as np
 import trimesh
 from skimage import measure
@@ -7,32 +5,21 @@ from skimage import measure
 from brain_region_database.nifti import NiftiImage, Zooms
 
 
-def nifti_to_polyhedralsurface(image: NiftiImage, simplify: bool = False, decimate_factor: float = 0.5) -> str:
-    """
-    Convert a NIfTI mask to PostGIS POLYHEDRALSURFACE Z.
-    """
+def compute_nifti_mask_mesh(
+    original: NiftiImage,
+    data: np.ndarray,
+    simplify: bool = False,
+    decimate_factor: float = 0.5,
+) -> tuple[np.ndarray, np.ndarray]:
+    header = original.header
+    zooms  = header.get_zooms()
 
-    data = image.get_fdata()
-    mask = data.astype(bool)
-
-    header = image.header
-    if hasattr(header, 'get_zooms'):
-        zooms = cast(Zooms, header.get_zooms())
-    else:
-        zooms = (1.0, 1.0, 1.0)
-
-    print(f"Image shape: {data.shape}")
-    print(f"Voxel dimensions: {zooms}")
-    print(f"Mask voxels: {np.sum(mask)} / {mask.size}")
-
-    verts, faces = extract_surface_marching_cubes(mask, zooms, image.affine)
+    verts, faces = extract_surface_marching_cubes(data, zooms, original.affine)
 
     if simplify and len(faces) > 10000:
         verts, faces = simplify_mesh(verts, faces, decimate_factor)
 
-    wkt = mesh_to_polyhedralsurface(verts, faces)
-
-    return wkt
+    return verts, faces
 
 
 def extract_surface_marching_cubes(
@@ -85,24 +72,3 @@ def simplify_mesh(
     simplified = mesh.simplify_quadric_decimation(target_faces)
 
     return simplified.vertices, simplified.faces
-
-
-def mesh_to_polyhedralsurface(vertices: np.ndarray, faces: np.ndarray) -> str:
-    """
-    Convert mesh to PostGIS POLYHEDRALSURFACE Z WKT format.
-    """
-
-    polygons: list[str] = []
-
-    for face in faces:
-        face_vertices = vertices[face]
-
-        if len(face_vertices) > 0:
-            closed_face = np.vstack([face_vertices, face_vertices[0:1]])
-        else:
-            continue
-
-        coords_str = ", ".join(f"({x:.6f} {y:.6f} {z:.6f})" for x, y, z in closed_face)
-        polygons.append(f"(({coords_str}))")
-
-    return f"POLYHEDRALSURFACE Z ({', '.join(polygons)})"

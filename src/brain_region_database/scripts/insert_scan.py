@@ -26,7 +26,7 @@ def main() -> None:
     )
 
     parser.add_argument(
-        '--file',
+        'file',
         type=Path,
         help='JSON file containing the scan data. If not provided, read from the standard input.'
     )

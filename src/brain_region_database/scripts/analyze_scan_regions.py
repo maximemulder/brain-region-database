@@ -7,9 +7,9 @@ from pathlib import Path
 import numpy as np
 
 from brain_region_database.atlas import AtlasRegion, load_atlas_dictionary, print_atlas_regions
-from brain_region_database.nifti import NDArray3, ants_to_nib, get_voxel_size, has_same_dims, nib_to_ants, resample_to_same_dims, load_nifti_image
+from brain_region_database.nifti import NDArray3, NiftiImage, ants_to_nib, get_voxel_size, nib_to_ants, load_nifti_image
 from brain_region_database.process.registration import register_nifti
-from brain_region_database.process.vectorization import nifti_to_polyhedralsurface
+from brain_region_database.process.vectorization import compute_nifti_mask_mesh
 from brain_region_database.scan import Point3D, Scan, ScanRegion
 
 # ruff: noqa
@@ -64,7 +64,7 @@ def main() -> None:
     for region in atlas_dictionary.regions:
         print(f"Processing region '{region.name}' ({region.value})")
 
-        regions.append(collect_region_statistics(region, atlas_data, scan_data))
+        regions.append(collect_region_statistics(atlas_image, region, atlas_data, scan_data))
 
     scan = Scan(
         file_name=scan_path.name,
@@ -87,6 +87,7 @@ def main() -> None:
 
 
 def collect_region_statistics(
+    original: NiftiImage,
     region: AtlasRegion,
     atlas_data: NDArray3[np.float32],
     scan_data: NDArray3[np.float32],
@@ -107,6 +108,8 @@ def collect_region_statistics(
     min_bounding_box = np.min(region_coordinates, axis=0).astype(int)
     max_bounding_box = np.max(region_coordinates, axis=0).astype(int)
 
+    vertices, faces = compute_nifti_mask_mesh(original, region_mask)
+
     return ScanRegion(
         name=region.name,
         value=region.value,
@@ -120,6 +123,10 @@ def collect_region_statistics(
         bounding_box=(
             Point3D.from_array(min_bounding_box),
             Point3D.from_array(max_bounding_box),
+        ),
+        shape=(
+            [tuple(row) for row in vertices],
+            [tuple(row) for row in faces],
         ),
     )
 

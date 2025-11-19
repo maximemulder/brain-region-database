@@ -1,30 +1,30 @@
 from geoalchemy2 import Geometry
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, mapped_column, relationship
 
 
 # SQLAlchemy Models
-class Base(DeclarativeBase):
+class Base(DeclarativeBase, MappedAsDataclass):
     pass
 
 
 class DBScan(Base):
     __tablename__ = 'scan'
 
-    id         : Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id         : Mapped[int] = mapped_column(init=False, primary_key=True, autoincrement=True)
     file_name  : Mapped[str] = mapped_column(index=True, unique=True)
     file_size  : Mapped[int]
     dimensions : Mapped[str]
     voxel_size : Mapped[str]
 
     # Relationships
-    regions: Mapped[list['DBScanRegion']] = relationship(back_populates='scan')
+    regions: Mapped[list['DBScanRegion']] = relationship(init=False, back_populates='scan')
 
 
 class DBScanRegion(Base):
     __tablename__ = 'scan_region'
 
-    id      : Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id      : Mapped[int] = mapped_column(init=False, primary_key=True, autoincrement=True)
     scan_id : Mapped[int] = mapped_column(ForeignKey('scan.id'))
 
     # Region atlas properties
@@ -40,8 +40,8 @@ class DBScanRegion(Base):
     median_intensity : Mapped[float]
 
     # Geometric properties
-    centroid     : Mapped[Geometry] = mapped_column(Geometry('POINTZ', srid=4326),)
-    bounding_box : Mapped[Geometry] = mapped_column(Geometry('POLYHEDRALSURFACEZ', srid=4326))
+    centroid : Mapped[Geometry] = mapped_column(Geometry('POINTZ', srid=4326),)
+    shape    : Mapped[Geometry] = mapped_column(Geometry('POLYHEDRALSURFACEZ', srid=4326))
 
     # Relationships
-    scan: Mapped['DBScan'] = relationship(back_populates='regions')
+    scan: Mapped['DBScan'] = relationship(init=False, back_populates='regions')
