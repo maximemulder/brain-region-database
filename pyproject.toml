@@ -8,6 +8,7 @@ version = "0.0.0"
 requires-python = ">=3.12"
 dependencies = [
     "antspyx",
+    "fast-simplification",
     "geoalchemy2",
     "nibabel",
     "nilearn>=0.12.1",
@@ -25,11 +26,12 @@ dev = [
 ]
 
 [project.scripts]
-analyze-scan-regions = "brain_region_database.scripts.analyze_scan_regions:main"
-create-database      = "brain_region_database.scripts.create_database:main"
-extract-scan-regions = "brain_region_database.scripts.extract_scan_regions:main"
-insert-scan          = "brain_region_database.scripts.insert_scan:main"
-patch-scan           = "brain_region_database.scripts.patch_scan:main"
+analyze-scan-regions   = "brain_region_database.scripts.analyze_scan_regions:main"
+create-database        = "brain_region_database.scripts.create_database:main"
+extract-scan-regions   = "brain_region_database.scripts.extract_scan_regions:main"
+insert-scan            = "brain_region_database.scripts.insert_scan:main"
+patch-scan             = "brain_region_database.scripts.patch_scan:main"
+find-intersect-regions = "brain_region_database.scripts.find_intersect_regions:main"
 
 [tool.ruff]
 line-length = 120

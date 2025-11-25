@@ -9,7 +9,7 @@ import numpy as np
 from brain_region_database.atlas import AtlasRegion, load_atlas_dictionary, print_atlas_regions
 from brain_region_database.nifti import NDArray3, NiftiImage, ants_to_nib, get_voxel_size, nib_to_ants, load_nifti_image
 from brain_region_database.process.registration import register_nifti
-from brain_region_database.process.vectorization import compute_nifti_mask_mesh
+from brain_region_database.process.vectorization import Simplification, compute_nifti_mask_mesh
 from brain_region_database.scan import Point3D, Scan, ScanRegion
 
 # ruff: noqa
@@ -34,11 +34,24 @@ def main() -> None:
         required=True,
         help="The brain scan NIfTI image.")
 
+    parser.add_argument('--simplify-threshold',
+        type=int,
+        help="Number of faces above which to simplify region meshes.")
+
+    parser.add_argument('--simplify-factor',
+        type=float,
+        help="Factor by which to simplify region meshes.")
+
     parser.add_argument('--output',
         type=Path,
         help="Print the scan information JSON in a file instead of the console.")
 
     args = parser.parse_args()
+
+    if args.simplify_threshold and args.simplify_factor:
+        simplification = Simplification(args.simplify_threshold, args.simplify_factor)
+    else:
+        simplification = None
 
     atlas_dictionary_path = Path(args.atlas_dictionary)
     atlas_image_path      = Path(args.atlas_image)
@@ -64,7 +77,7 @@ def main() -> None:
     for region in atlas_dictionary.regions:
         print(f"Processing region '{region.name}' ({region.value})")
 
-        regions.append(collect_region_statistics(atlas_image, region, atlas_data, scan_data))
+        regions.append(collect_region_statistics(atlas_image, region, atlas_data, scan_data, simplification))
 
     scan = Scan(
         file_name=scan_path.name,
@@ -91,6 +104,7 @@ def collect_region_statistics(
     region: AtlasRegion,
     atlas_data: NDArray3[np.float32],
     scan_data: NDArray3[np.float32],
+    simplification: Simplification | None,
 ) -> ScanRegion:
     # Create the mask of the region.
     region_mask = (atlas_data == region.value)
@@ -108,7 +122,7 @@ def collect_region_statistics(
     min_bounding_box = np.min(region_coordinates, axis=0).astype(int)
     max_bounding_box = np.max(region_coordinates, axis=0).astype(int)
 
-    vertices, faces = compute_nifti_mask_mesh(original, region_mask)
+    vertices, faces = compute_nifti_mask_mesh(original, region_mask, simplification)
 
     return ScanRegion(
         name=region.name,

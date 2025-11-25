@@ -1,5 +1,5 @@
 from geoalchemy2 import Geometry
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Index
 from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, mapped_column, relationship
 
 
@@ -23,6 +23,13 @@ class DBScan(Base):
 
 class DBScanRegion(Base):
     __tablename__ = 'scan_region'
+    # __table_args__ = (
+    #     # Regular index for non-geometric columns
+    #     Index('idx_scan_region_scan_id_name', 'scan_id', 'name'),
+    #     # Spatial indexes for geometric columns
+    #     Index('idx_scan_region_centroid', 'centroid', postgresql_using='gist'),
+    #     Index('idx_scan_region_shape', 'shape', postgresql_using='gist'),
+    # )
 
     id      : Mapped[int] = mapped_column(init=False, primary_key=True, autoincrement=True)
     scan_id : Mapped[int] = mapped_column(ForeignKey('scan.id'))

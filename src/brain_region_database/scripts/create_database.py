@@ -21,6 +21,8 @@ def create_database(engine: Engine):
         if len(inspect(engine).get_table_names()) > 0:
             print("Dropping existing tables...")
             Base.metadata.drop_all(engine)
+            # Base.metadata.clear()
+
         print("Creating tables...")
         Base.metadata.create_all(engine)
     except Exception as error:

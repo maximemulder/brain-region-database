@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import numpy as np
 import trimesh
 from skimage import measure
@@ -5,19 +7,39 @@ from skimage import measure
 from brain_region_database.nifti import NiftiImage, Zooms
 
 
+@dataclass
+class Simplification:
+    threshold: int
+    """
+    Number of faces above which the mesh should be simplified.
+    """
+
+    factor: float
+    """
+    Factor by which to reduce the number of faces of the mesh.
+    """
+
+
 def compute_nifti_mask_mesh(
     original: NiftiImage,
     data: np.ndarray,
-    simplify: bool = False,
-    decimate_factor: float = 0.5,
+    simplification: Simplification | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Compte the 3D mesh of a NIfTI mask, simplifying according to the given parameters if desired.
+    """
+
     header = original.header
-    zooms  = header.get_zooms()
+    zooms  = header.get_zooms()  # type: ignore
 
-    verts, faces = extract_surface_marching_cubes(data, zooms, original.affine)
+    print("  Computing region mesh...")
+    verts, faces = extract_surface_marching_cubes(data, zooms, original.affine)  # type: ignore
 
-    if simplify and len(faces) > 10000:
-        verts, faces = simplify_mesh(verts, faces, decimate_factor)
+    print(f"  Region has {len(faces)} faces")
+
+    if simplification is not None and len(faces) > simplification.threshold:
+        print("  Simplifying region mesh...")
+        verts, faces = simplify_mesh(verts, faces, simplification.factor)
 
     return verts, faces
 
@@ -32,23 +54,25 @@ def extract_surface_marching_cubes(
     Extract surface using marching cubes with proper coordinate transformation.
     """
 
-    verts, faces, normals, values = measure.marching_cubes(
+    verts, faces, _, _ = measure.marching_cubes(  # type: ignore
         mask.astype(float),
         level=level,
         spacing=zooms,
         allow_degenerate=False
     )
 
-    verts = apply_affine_transform(verts, affine)
+    verts = apply_affine_transform(verts, affine)  # type: ignore
 
-    return verts, faces
+    return verts, faces  # type: ignore
 
 
 def apply_affine_transform(vertices: np.ndarray, affine: np.ndarray) -> np.ndarray:
     """
     Apply NIfTI affine transform to convert voxel coordinates to world coordinates.
     """
+
     ones = np.ones((vertices.shape[0], 1))
+
     verts_homogeneous = np.hstack([vertices, ones])
 
     verts_transformed = (affine @ verts_homogeneous.T).T
@@ -59,16 +83,14 @@ def apply_affine_transform(vertices: np.ndarray, affine: np.ndarray) -> np.ndarr
 def simplify_mesh(
     vertices: np.ndarray,
     faces: np.ndarray,
-    factor: float = 0.5
+    factor: float,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    Simplify mesh to reduce polygon count while preserving shape.
+    Simplify a mesh by reducing the polygon count while trying to preserve its shape.
     """
 
     mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
 
-    target_faces = int(len(faces) * factor)
-
-    simplified = mesh.simplify_quadric_decimation(target_faces)
+    simplified = mesh.simplify_quadric_decimation(factor)
 
     return simplified.vertices, simplified.faces
