@@ -47,7 +47,7 @@ class DBScanRegion(Base):
     median_intensity : Mapped[float]
 
     # Geometric properties
-    centroid : Mapped[Geometry] = mapped_column(Geometry('POINTZ', srid=4326),)
+    centroid : Mapped[Geometry] = mapped_column(Geometry('POINTZ', srid=4326))
     shape    : Mapped[Geometry] = mapped_column(Geometry('POLYHEDRALSURFACEZ', srid=4326))
 
     # Relationships

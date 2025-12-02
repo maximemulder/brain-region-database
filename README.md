@@ -38,8 +38,7 @@ analyze-scan-regions \
   --atlas-image demo/mni_icbm152_CerebrA_tal_nlin_sym_09c.nii \
   --atlas-dictionary demo/CerebrA_LabelDetails.csv \
   --scan ../../COMP5411/demo_587630_V1_t1_001.nii \
-  --simplify-threshold 5000 \
-  --simplify-factor 0.2 \
+  --simplify 2000 \
   --output regions.json
 ```
 

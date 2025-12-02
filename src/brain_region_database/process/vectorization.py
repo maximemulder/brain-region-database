@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 import numpy as np
 import trimesh
 from skimage import measure
@@ -7,23 +5,10 @@ from skimage import measure
 from brain_region_database.nifti import NiftiImage, Zooms
 
 
-@dataclass
-class Simplification:
-    threshold: int
-    """
-    Number of faces above which the mesh should be simplified.
-    """
-
-    factor: float
-    """
-    Factor by which to reduce the number of faces of the mesh.
-    """
-
-
 def compute_nifti_mask_mesh(
     original: NiftiImage,
     data: np.ndarray,
-    simplification: Simplification | None = None,
+    faces_limit: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Compte the 3D mesh of a NIfTI mask, simplifying according to the given parameters if desired.
@@ -37,9 +22,9 @@ def compute_nifti_mask_mesh(
 
     print(f"  Region has {len(faces)} faces")
 
-    if simplification is not None and len(faces) > simplification.threshold:
-        print("  Simplifying region mesh...")
-        verts, faces = simplify_mesh(verts, faces, simplification.factor)
+    if faces_limit is not None and len(faces) > faces_limit:
+        print(f"  Simplifying region mesh to {faces_limit} faces...")
+        verts, faces = simplify_mesh(verts, faces, faces_limit)
 
     return verts, faces
 
@@ -83,7 +68,7 @@ def apply_affine_transform(vertices: np.ndarray, affine: np.ndarray) -> np.ndarr
 def simplify_mesh(
     vertices: np.ndarray,
     faces: np.ndarray,
-    factor: float,
+    faces_limit: int,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Simplify a mesh by reducing the polygon count while trying to preserve its shape.
@@ -91,6 +76,6 @@ def simplify_mesh(
 
     mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
 
-    simplified = mesh.simplify_quadric_decimation(factor)
+    simplified = mesh.simplify_quadric_decimation(face_count=faces_limit)
 
     return simplified.vertices, simplified.faces
