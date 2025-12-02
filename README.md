@@ -106,3 +106,10 @@ FROM scan_region sr
 GROUP BY sr.name
 ORDER BY min_shape_z DESC;
 ```
+
+# TODO:
+1. Compare 3D intersection time for single shape
+2. Compare single-scan intersection time without index, with index, with SFCGAL
+3. Add LOD
+4. Randomized scan regions
+5. Other queries

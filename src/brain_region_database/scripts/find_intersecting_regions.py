@@ -40,15 +40,16 @@ def find_intersecting_regions(db: Session, scan_file_name: str, epsilon: float |
             db_scan_region_b.id.label('region_b_id'),
             db_scan_region_b.name.label('region_b'),
         )
-        .join(DBScanRegion.scan)
-        .where(DBScan.id == scan.id)
+        .select_from(db_scan_region_a)
+        .join(db_scan_region_b, db_scan_region_a.scan_id == db_scan_region_b.scan_id)
+        .where(db_scan_region_a.scan_id == scan.id)
         .where(db_scan_region_a.id < db_scan_region_b.id)  # Avoid self-comparison and duplicates.
+        .where(
+            ST_3DDWithin(db_scan_region_a.shape, db_scan_region_b.shape, epsilon)
+            if epsilon is not None else
+            ST_3DIntersects(db_scan_region_a.shape, db_scan_region_b.shape)
+        )
     )
-
-    if epsilon is not None:
-        query = query.where(ST_3DDWithin(db_scan_region_a.shape, db_scan_region_b.shape, epsilon))
-    else:
-        query = query.where(ST_3DIntersects(db_scan_region_a.shape, db_scan_region_b.shape))
 
     results = db.execute(query).all()
 
