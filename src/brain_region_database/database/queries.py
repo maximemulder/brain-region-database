@@ -3,8 +3,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session as Database
 from sqlalchemy.sql.expression import func
 
+from brain_region_database.database.conversions import create_point, create_postgis_3d_geometry
 from brain_region_database.database.models import DBRegion, DBScan, DBScanRegion, DBScanRegionLOD
-from brain_region_database.scan import Point3D, Scan, ScanRegion
+from brain_region_database.scan import Scan, ScanRegion
 
 
 def try_get_scan(db: Database, file_name: str) -> DBScan | None:
@@ -113,45 +114,3 @@ def insert_scan_region_lod(db: Database, scan: DBScan, region: DBRegion, region_
     db.add(lod)
     db.flush()
     return lod
-
-
-def create_point(centroid: Point3D) -> str:
-    return f"POINT Z({centroid.x} {centroid.y} {centroid.z})"
-
-
-def create_box(box: tuple[Point3D, Point3D]) -> str:
-    min, max = box
-    # ruff: noqa
-    return f"""POLYHEDRALSURFACE Z (
-        (({min.x} {min.y} {min.z}, {max.x} {min.y} {min.z}, {max.x} {max.y} {min.z}, {min.x} {max.y} {min.z}, {min.x} {min.y} {min.z})),
-        (({min.x} {min.y} {max.z}, {max.x} {min.y} {max.z}, {max.x} {max.y} {max.z}, {min.x} {max.y} {max.z}, {min.x} {min.y} {max.z})),
-        (({min.x} {min.y} {min.z}, {max.x} {min.y} {min.z}, {max.x} {min.y} {max.z}, {min.x} {min.y} {max.z}, {min.x} {min.y} {min.z})),
-        (({min.x} {max.y} {min.z}, {max.x} {max.y} {min.z}, {max.x} {max.y} {max.z}, {min.x} {max.y} {max.z}, {min.x} {max.y} {min.z})),
-        (({min.x} {min.y} {min.z}, {min.x} {max.y} {min.z}, {min.x} {max.y} {max.z}, {min.x} {min.y} {max.z}, {min.x} {min.y} {min.z})),
-        (({max.x} {min.y} {min.z}, {max.x} {max.y} {min.z}, {max.x} {max.y} {max.z}, {max.x} {min.y} {max.z}, {max.x} {min.y} {min.z}))
-    )"""
-
-
-def create_postgis_3d_geometry(
-    vertices: list[tuple[float, float, float]],
-    faces: list[tuple[int, int, int]],
-) -> str:
-    """
-    Convert vertices and faces to a PostGIS 3D geometry (POLYHEDRALSURFACE).
-    """
-
-    def create_polygon_ewkt(face_vertices: list[tuple[float, float, float]])  -> str:
-        """Create EWKT for a single polygon from face vertices."""
-        # Close the polygon by repeating the first vertex
-        coords = ", ".join(f"{x} {y} {z}" for x, y, z in face_vertices)
-        coords += f", {face_vertices[0][0]} {face_vertices[0][1]} {face_vertices[0][2]}"
-        return f"(({coords}))"
-
-    polygons: list[str] = []
-    for face in faces:
-        # Get vertices for this face (convert from 0-based to 1-based if needed)
-        face_vertices = [vertices[vertex_idx] for vertex_idx in face]
-        polygons.append(create_polygon_ewkt(face_vertices))
-
-    polygons_ewkt = ", ".join(polygons)
-    return f"POLYHEDRALSURFACE Z ({polygons_ewkt})"
