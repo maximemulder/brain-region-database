@@ -21,8 +21,9 @@ def find_intersecting_regions(
     db: Database,
     scan_file_name: str,
     lod_level: int | None,
-    epsilon: float | None,
-    box: Box | None
+    box: Box | None,
+    intersect: bool,
+    distance: float | None,
 ):
     """
     Find all the regions within an epsilon distance of each other.
@@ -70,9 +71,6 @@ def find_intersecting_regions(
             db_scan_region_lod_b.scan == scan,
             db_scan_region_lod_a.level == lod_level,
             db_scan_region_lod_b.level == lod_level,
-            ST_3DDWithin(db_scan_region_lod_a.shape, db_scan_region_lod_b.shape, epsilon)
-            if epsilon is not None else
-            ST_3DIntersects(db_scan_region_lod_a.shape, db_scan_region_lod_b.shape),
         )
     )
 
@@ -84,6 +82,12 @@ def find_intersecting_regions(
                 op = '&&&'
 
         query = query.where(db_scan_region_lod_a.shape.op(op)(db_scan_region_lod_b.shape))
+
+    if intersect:
+        query = query.where(ST_3DIntersects(db_scan_region_lod_a.shape, db_scan_region_lod_b.shape))
+
+    if distance is not None:
+        query = query.where(ST_3DDWithin(db_scan_region_lod_a.shape, db_scan_region_lod_b.shape, distance))
 
     results = db.execute(query).all()
 
@@ -108,19 +112,23 @@ def main() -> None:
             " present in the database."
         ))
 
-    parser.add_argument('--epsilon',
-        type=float,
-        help="Distance threshold, if present, use 'ST_3DDWithin' to compare regions, if not, use 'ST_3DIntersects'.")
-
     parser.add_argument('--box',
         choices=['2d', '3d'],
-        help="Whether to filter using bounding boxes. If not present, no bounding box comparison is used.")
+        help="Check whether the regions bounding boxes intersect in 2D or 3D using '&&' or '&&&'.")
+
+    parser.add_argument('--intersect',
+        action='store_true',
+        help="Check whether the regions exactly intersect with each other using 'ST_3DDWithin'.")
+
+    parser.add_argument('--distance',
+        type=float,
+        help="Check whether the regions are within a given distance of each other using 'ST_3DIntersects'.")
 
     args = parser.parse_args()
 
     db = get_engine_session()
 
-    find_intersecting_regions(db, args.scan, args.lod, args.epsilon, args.box)
+    find_intersecting_regions(db, args.scan, args.lod, args.box, args.intersect, args.distance)
 
 
 if __name__ == "__main__":
