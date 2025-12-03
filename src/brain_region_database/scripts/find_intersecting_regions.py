@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+from typing import Literal
 
 from geoalchemy2.functions import ST_3DDWithin, ST_3DIntersects
 from sqlalchemy import select
@@ -13,8 +14,16 @@ from brain_region_database.database.monitor import DatabaseMonitor
 from brain_region_database.database.queries import get_scan_regions_lod_with_scan_and_level
 from brain_region_database.util import print_error_exit
 
+type Box = Literal['2d', '3d']
 
-def find_intersecting_regions(db: Database, scan_file_name: str, lod_level: int | None, epsilon: float | None):
+
+def find_intersecting_regions(
+    db: Database,
+    scan_file_name: str,
+    lod_level: int | None,
+    epsilon: float | None,
+    box: Box | None
+):
     """
     Find all the regions within an epsilon distance of each other.
     """
@@ -45,26 +54,38 @@ def find_intersecting_regions(db: Database, scan_file_name: str, lod_level: int 
     db_scan_region_lod_a = aliased(DBScanRegionLOD)
     db_scan_region_lod_b = aliased(DBScanRegionLOD)
 
-    results = db.execute(
+    query = (
         select(
             db_scan_region_a.id.label('region_a_id'),
             db_scan_region_a.name.label('region_a'),
             db_scan_region_b.id.label('region_b_id'),
             db_scan_region_b.name.label('region_b'),
         )
-        .select_from(db_scan_region_a, db_scan_region_b)
+        .select_from(db_scan_region_a)
+        .join(db_scan_region_b, db_scan_region_a.id < db_scan_region_b.id)  # Avoid self-comparison and duplicates.
         .join(db_scan_region_lod_a, db_scan_region_lod_a.region_id == db_scan_region_a.id)
         .join(db_scan_region_lod_b, db_scan_region_lod_b.region_id == db_scan_region_b.id)
         .where(
             db_scan_region_lod_a.scan == scan,
-            db_scan_region_a.id < db_scan_region_b.id,  # Avoid self-comparison and duplicates.
+            db_scan_region_lod_b.scan == scan,
             db_scan_region_lod_a.level == lod_level,
             db_scan_region_lod_b.level == lod_level,
             ST_3DDWithin(db_scan_region_lod_a.shape, db_scan_region_lod_b.shape, epsilon)
             if epsilon is not None else
             ST_3DIntersects(db_scan_region_lod_a.shape, db_scan_region_lod_b.shape),
         )
-    ).all()
+    )
+
+    if box is not None:
+        match box:
+            case '2d':
+                op = '&&'
+            case '3d':
+                op = '&&&'
+
+        query = query.where(db_scan_region_lod_a.shape.op(op)(db_scan_region_lod_b.shape))
+
+    results = db.execute(query).all()
 
     print(f"Found {len(results)} intersecting region pairs:")
     for result in results:
@@ -91,11 +112,15 @@ def main() -> None:
         type=float,
         help="Distance threshold, if present, use 'ST_3DDWithin' to compare regions, if not, use 'ST_3DIntersects'.")
 
+    parser.add_argument('--box',
+        choices=['2d', '3d'],
+        help="Whether to filter using bounding boxes. If not present, no bounding box comparison is used.")
+
     args = parser.parse_args()
 
     db = get_engine_session()
 
-    find_intersecting_regions(db, args.scan, args.lod, args.epsilon)
+    find_intersecting_regions(db, args.scan, args.lod, args.epsilon, args.box)
 
 
 if __name__ == "__main__":

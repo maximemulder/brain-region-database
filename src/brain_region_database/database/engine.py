@@ -20,7 +20,7 @@ def get_engine() -> Engine:
 
     debug_variable = os.environ.get('POSTGIS_DEBUG')
     echo = debug_variable == 'true' or debug_variable == '1'
-    return create_engine(url, echo=echo)
+    return create_engine(url, echo=echo, plugins=['geoalchemy2'])
 
 
 def get_engine_session() -> Session:
