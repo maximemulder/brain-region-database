@@ -27,14 +27,15 @@ dev = [
 ]
 
 [project.scripts]
-analyze-scan-regions      = "brain_region_database.scripts.analyze_scan_regions:main"
-create-database           = "brain_region_database.scripts.create_database:main"
-extract-scan-regions      = "brain_region_database.scripts.extract_scan_regions:main"
-find-intersecting-regions = "brain_region_database.scripts.find_intersecting_regions:main"
-insert-scan               = "brain_region_database.scripts.insert_scan:main"
-patch-scan                = "brain_region_database.scripts.patch_scan:main"
-randomize-scan            = "brain_region_database.scripts.randomize_scan:main"
-visualize-scan-regions    = "brain_region_database.scripts.visualize_scan_regions:main"
+analyze-scan-regions       = "brain_region_database.scripts.analyze_scan_regions:main"
+create-database            = "brain_region_database.scripts.create_database:main"
+extract-scan-regions       = "brain_region_database.scripts.extract_scan_regions:main"
+find-intersecting-regions  = "brain_region_database.scripts.find_intersecting_regions:main"
+insert-scan                = "brain_region_database.scripts.insert_scan:main"
+patch-scan                 = "brain_region_database.scripts.patch_scan:main"
+randomize-scan             = "brain_region_database.scripts.randomize_scan:main"
+visualize-database-regions = "brain_region_database.scripts.visualize_database_regions:main"
+visualize-file-regions     = "brain_region_database.scripts.visualize_file_regions:main"
 
 [tool.ruff]
 line-length = 120

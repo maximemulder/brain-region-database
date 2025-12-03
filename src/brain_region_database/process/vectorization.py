@@ -1,5 +1,6 @@
 import numpy as np
 import trimesh
+import trimesh.repair
 from skimage import measure
 
 from brain_region_database.nifti import NiftiImage, Zooms
@@ -21,10 +22,14 @@ def compute_nifti_mask_mesh(
     verts, faces = extract_surface_marching_cubes(data, zooms, original.affine)  # type: ignore
 
     print(f"  Region has {len(faces)} faces")
+    print("  Cleaning mesh...")
+    verts, faces = clean_mesh(verts, faces)
 
     if faces_limit is not None and len(faces) > faces_limit:
         print(f"  Simplifying region mesh to {faces_limit} faces...")
         verts, faces = simplify_mesh(verts, faces, faces_limit)
+        print("  Cleaning mesh...")
+        verts, faces = clean_mesh(verts, faces)
 
     return verts, faces
 
@@ -79,3 +84,37 @@ def simplify_mesh(
     simplified = mesh.simplify_quadric_decimation(face_count=faces_limit)
 
     return simplified.vertices, simplified.faces
+
+
+def clean_mesh(
+    vertices: np.ndarray,
+    faces: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Clean mesh and ensure consistent face orientation.
+    """
+
+    mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
+
+    print(f"    Original: {len(mesh.vertices)} vertices, {len(mesh.faces)} faces")
+
+    # 1. Remove duplicate vertices
+    mesh.merge_vertices()
+    mesh.remove_unreferenced_vertices()
+
+    # 2. Fix face orientation
+    trimesh.repair.fix_normals(mesh)
+    trimesh.repair.fix_winding(mesh)
+
+    # 3. Try to make watertight
+    if not mesh.is_watertight:
+        print("    Mesh is not watertight, attempting to fix...")
+        trimesh.repair.fill_holes(mesh)
+        mesh.fill_holes()
+
+    # 4. Fix any inversion
+    trimesh.repair.fix_inversion(mesh)
+
+    print(f"    Cleaned: {len(mesh.vertices)} vertices, {len(mesh.faces)} faces")
+
+    return mesh.vertices, mesh.faces

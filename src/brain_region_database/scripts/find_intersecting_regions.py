@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 
 from geoalchemy2.functions import ST_3DDWithin, ST_3DIntersects

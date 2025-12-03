@@ -1,6 +1,6 @@
+#!/usr/bin/env python
+
 import argparse
-import colorsys
-import random
 import re
 
 import numpy as np
@@ -12,12 +12,10 @@ from sqlalchemy.orm import Session as Database
 from brain_region_database.database.engine import get_engine_session
 from brain_region_database.database.models import DBScanRegion, DBScanRegionLOD
 from brain_region_database.database.queries import try_get_scan_with_file_name
-from brain_region_database.util import print_error_exit
-
-type Color = tuple[int | float, int | float, int | float]
+from brain_region_database.util import generate_random_colors, print_error_exit
 
 
-def visualize_scan_regions(db: Database, file_name: str, lod_level: int | None):
+def visualize_database_scan(db: Database, file_name: str, lod_level: int | None):
     scan = try_get_scan_with_file_name(db, file_name)
     if scan is None:
         return print_error_exit(f"No scan type with file name '{file_name}' found.")
@@ -47,33 +45,6 @@ def visualize_scan_regions(db: Database, file_name: str, lod_level: int | None):
     )
 
     plotter.show()  # type: ignore
-
-
-def generate_random_colors(n: int) -> list[Color]:
-    """
-    Generate evenly-distributed random colors for visualization.
-    """
-
-    # Distribute hues evenly around the color wheel.
-    hues = [i / n for i in range(n)]
-
-    # Shuffle but maintain some order for better visual separation.
-    random.shuffle(hues)
-
-    colors: list[Color] = []
-
-    for hue in hues:
-        # Vary saturation and value slightly for a more natural look.
-        sat = random.uniform(0.6, 0.8)
-        val = random.uniform(0.7, 0.9)
-
-        # Convert HSV to RGB.
-        r, g, b = colorsys.hsv_to_rgb(hue, sat, val)
-
-        # Convert to 0-255 range.
-        colors.append((int(r * 255), int(g * 255), int(b * 255)))
-
-    return colors
 
 
 def polyhedral_to_pyvista_mesh(surface_string: str) -> pv.PolyData:
@@ -143,7 +114,7 @@ def main() -> None:
 
     db = get_engine_session()
 
-    visualize_scan_regions(db, args.scan, args.lod)
+    visualize_database_scan(db, args.scan, args.lod)
 
 
 if __name__ == '__main__':
