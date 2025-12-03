@@ -43,6 +43,20 @@ def try_get_largest_scan_lod(db: Database, scan: DBScan) -> int | None:
     ).scalar_one_or_none()
 
 
+def get_scan_regions_lod_with_scan_and_level(
+    db: Database,
+    scan: DBScan,
+    lod_level: int | None,
+) -> list[DBScanRegionLOD]:
+    return list(db.execute(select(DBScanRegionLOD)
+        .join(DBScanRegionLOD.region)
+        .where(
+            DBScanRegion.scan == scan,
+            DBScanRegionLOD.level == lod_level,
+        )
+    ).scalars().all())
+
+
 def insert_scan(db: Database, scan_data: Scan) -> DBScan:
     scan = DBScan(
         file_name=scan_data.file_name,
@@ -78,7 +92,7 @@ def insert_scan_region(db: Database, scan: DBScan, region_data: ScanRegion) -> D
 def insert_scan_region_lod(db: Database, region: DBScanRegion, region_data: ScanRegion) -> DBScanRegionLOD:
     lod = DBScanRegionLOD(
         region_id=region.id,
-        level=len(region_data.shape[1]),
+        level=region_data.lod_level,
         shape=ST_GeomFromEWKT(create_postgis_3d_geometry(region_data.shape[0], region_data.shape[1]), srid=4326)
     )
 

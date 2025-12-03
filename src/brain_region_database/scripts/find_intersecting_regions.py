@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, aliased
 
 from brain_region_database.database.engine import get_engine
 from brain_region_database.database.models import DBScan, DBScanRegion, DBScanRegionLOD
+from brain_region_database.database.queries import get_scan_regions_lod_with_scan_and_level
 from brain_region_database.util import print_error_exit
 
 
@@ -17,39 +18,49 @@ def find_intersecting_regions(db: Session, scan_file_name: str, lod_level: int |
     scan = db.execute(select(DBScan).where(DBScan.file_name == scan_file_name)).scalar_one_or_none()
 
     if scan is None:
-        return print_error_exit(f"No scan file with name '{scan_file_name} found.")
+        return print_error_exit(f"No scan found for file name '{scan_file_name}'.")
 
     print(f"Found scan: '{scan_file_name}' (ID: '{scan.id}')")
-    print(f"Epsilon: {epsilon}")
+
+    if scan.regions == []:
+        return print_error_exit(f"No regions found for scan '{scan.file_name}'.")
+
+    print(f"Found {len(scan.regions)} regions for scan '{scan.file_name}'.")
+
+    region_lods = get_scan_regions_lod_with_scan_and_level(db, scan, lod_level)
+
+    if region_lods == []:
+        return print_error_exit(f"No regions LOD found for scan '{scan.file_name}' and LOD level {lod_level}.")
+
+    print(f"Found {len(region_lods)} regions LOD for scan '{scan.file_name}' and LOD level {lod_level}.")
 
     db_scan_region_a = aliased(DBScanRegion)
     db_scan_region_b = aliased(DBScanRegion)
     db_scan_region_lod_a = aliased(DBScanRegionLOD)
     db_scan_region_lod_b = aliased(DBScanRegionLOD)
 
-    query = (
+    results = db.execute(
         select(
             db_scan_region_a.id.label('region_a_id'),
             db_scan_region_a.name.label('region_a'),
             db_scan_region_b.id.label('region_b_id'),
             db_scan_region_b.name.label('region_b'),
         )
-        .select_from(db_scan_region_a)
-        .join(db_scan_region_b, db_scan_region_b.scan_id == db_scan_region_a.scan_id)
+        .select_from(DBScan)
+        .join(db_scan_region_a, db_scan_region_a.scan_id == DBScan.id)
+        .join(db_scan_region_b, db_scan_region_b.scan_id == DBScan.id)
         .join(db_scan_region_lod_a, db_scan_region_lod_a.region_id == db_scan_region_a.id)
         .join(db_scan_region_lod_b, db_scan_region_lod_b.region_id == db_scan_region_b.id)
-        .where(db_scan_region_a.scan_id == scan.id)
-        .where(db_scan_region_lod_a.level == lod_level)
-        .where(db_scan_region_lod_b.level == lod_level)
-        .where(db_scan_region_a.id < db_scan_region_b.id)  # Avoid self-comparison and duplicates.
         .where(
+            DBScan.id == scan.id,
+            db_scan_region_a.id < db_scan_region_b.id,  # Avoid self-comparison and duplicates.
+            db_scan_region_lod_a.level == lod_level,
+            db_scan_region_lod_b.level == lod_level,
             ST_3DDWithin(db_scan_region_lod_a.shape, db_scan_region_lod_b.shape, epsilon)
             if epsilon is not None else
-            ST_3DIntersects(db_scan_region_lod_a.shape, db_scan_region_lod_b.shape)
+            ST_3DIntersects(db_scan_region_lod_a.shape, db_scan_region_lod_b.shape),
         )
-    )
-
-    results = db.execute(query).all()
+    ).all()
 
     print(f"Found {len(results)} intersecting region pairs:")
     for result in results:
