@@ -15,6 +15,7 @@ dependencies = [
     "numpy>=2.3.4",
     "psycopg2-binary",
     "pydantic",
+    "pyvista",
     "scikit-image",
     "sqlalchemy",
     "trimesh",
@@ -29,9 +30,11 @@ dev = [
 analyze-scan-regions      = "brain_region_database.scripts.analyze_scan_regions:main"
 create-database           = "brain_region_database.scripts.create_database:main"
 extract-scan-regions      = "brain_region_database.scripts.extract_scan_regions:main"
+find-intersecting-regions = "brain_region_database.scripts.find_intersecting_regions:main"
 insert-scan               = "brain_region_database.scripts.insert_scan:main"
 patch-scan                = "brain_region_database.scripts.patch_scan:main"
-find-intersecting-regions = "brain_region_database.scripts.find_intersecting_regions:main"
+randomize-scan            = "brain_region_database.scripts.randomize_scan:main"
+visualize-scan-regions    = "brain_region_database.scripts.visualize_scan_regions:main"
 
 [tool.ruff]
 line-length = 120
