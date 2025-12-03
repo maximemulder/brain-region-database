@@ -14,7 +14,7 @@ from brain_region_database.database.queries import (
     insert_scan_region_lod,
     try_get_scan_region_lod_with_region_and_level,
     try_get_scan_region_with_scan_and_name,
-    try_get_scan_with_name,
+    try_get_scan_with_file_name,
 )
 from brain_region_database.scan import Scan
 from brain_region_database.util import print_error_exit
@@ -53,7 +53,7 @@ def main() -> None:
 
     db = get_engine_session()
 
-    scan = try_get_scan_with_name(db, scan_data.file_name)
+    scan = try_get_scan_with_file_name(db, scan_data.file_name)
     if scan is not None:
         print(f"Scan '{scan.file_name}' already present in the database.")
     else:

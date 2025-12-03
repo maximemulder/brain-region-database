@@ -7,7 +7,7 @@ from brain_region_database.database.models import DBScan, DBScanRegion, DBScanRe
 from brain_region_database.scan import Point3D, Scan, ScanRegion
 
 
-def try_get_scan_with_name(db: Database, file_name: str) -> DBScan | None:
+def try_get_scan_with_file_name(db: Database, file_name: str) -> DBScan | None:
     return db.execute(
         select(DBScan).where(DBScan.file_name == file_name)
     ).scalar_one_or_none()

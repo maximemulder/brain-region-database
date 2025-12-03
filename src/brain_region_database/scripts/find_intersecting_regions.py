@@ -2,25 +2,29 @@ import argparse
 
 from geoalchemy2.functions import ST_3DDWithin, ST_3DIntersects
 from sqlalchemy import select
-from sqlalchemy.orm import Session, aliased
+from sqlalchemy.orm import Session as Database
+from sqlalchemy.orm import aliased
 
-from brain_region_database.database.engine import get_engine
+from brain_region_database.database.engine import get_engine_session
 from brain_region_database.database.models import DBScan, DBScanRegion, DBScanRegionLOD
+from brain_region_database.database.monitor import DatabaseMonitor
 from brain_region_database.database.queries import get_scan_regions_lod_with_scan_and_level
 from brain_region_database.util import print_error_exit
 
 
-def find_intersecting_regions(db: Session, scan_file_name: str, lod_level: int | None, epsilon: float | None):
+def find_intersecting_regions(db: Database, scan_file_name: str, lod_level: int | None, epsilon: float | None):
     """
     Find all the regions within an epsilon distance of each other.
     """
+
+    DatabaseMonitor(db)
 
     scan = db.execute(select(DBScan).where(DBScan.file_name == scan_file_name)).scalar_one_or_none()
 
     if scan is None:
         return print_error_exit(f"No scan found for file name '{scan_file_name}'.")
 
-    print(f"Found scan: '{scan_file_name}' (ID: '{scan.id}')")
+    print(f"Found scan: '{scan_file_name}' (ID: {scan.id})")
 
     if scan.regions == []:
         return print_error_exit(f"No regions found for scan '{scan.file_name}'.")
@@ -89,7 +93,7 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    db = Session(get_engine())
+    db = get_engine_session()
 
     find_intersecting_regions(db, args.scan, args.lod, args.epsilon)
 
