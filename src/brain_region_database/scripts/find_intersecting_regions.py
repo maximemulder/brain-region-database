@@ -5,21 +5,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, aliased
 
 from brain_region_database.database.engine import get_engine
-from brain_region_database.database.models import DBScan, DBScanRegion
+from brain_region_database.database.models import DBScan, DBScanRegion, DBScanRegionLOD
 from brain_region_database.util import print_error_exit
 
 
-def find_intersecting_regions(db: Session, scan_file_name: str, epsilon: float | None):
+def find_intersecting_regions(db: Session, scan_file_name: str, lod_level: int | None, epsilon: float | None):
     """
-    Find all the regions within an epsilon distance of each other. If epsilon is a number, ``
-    Find all regions within epsilon distance of each other in a given scan
-
-    Args:
-        db_url: Database connection URL
-        scan_file_name: Name of the scan file to analyze
-        epsilon: Maximum distance threshold (in same units as your spatial data)
-        use_3d_intersects: If True, use ST_3DIntersects for exact intersection,
-                          else use ST_3DDWithin for distance-based
+    Find all the regions within an epsilon distance of each other.
     """
 
     scan = db.execute(select(DBScan).where(DBScan.file_name == scan_file_name)).scalar_one_or_none()
@@ -32,6 +24,8 @@ def find_intersecting_regions(db: Session, scan_file_name: str, epsilon: float |
 
     db_scan_region_a = aliased(DBScanRegion)
     db_scan_region_b = aliased(DBScanRegion)
+    db_scan_region_lod_a = aliased(DBScanRegionLOD)
+    db_scan_region_lod_b = aliased(DBScanRegionLOD)
 
     query = (
         select(
@@ -41,13 +35,17 @@ def find_intersecting_regions(db: Session, scan_file_name: str, epsilon: float |
             db_scan_region_b.name.label('region_b'),
         )
         .select_from(db_scan_region_a)
-        .join(db_scan_region_b, db_scan_region_a.scan_id == db_scan_region_b.scan_id)
+        .join(db_scan_region_b, db_scan_region_b.scan_id == db_scan_region_a.scan_id)
+        .join(db_scan_region_lod_a, db_scan_region_lod_a.region_id == db_scan_region_a.id)
+        .join(db_scan_region_lod_b, db_scan_region_lod_b.region_id == db_scan_region_b.id)
         .where(db_scan_region_a.scan_id == scan.id)
+        .where(db_scan_region_lod_a.level == lod_level)
+        .where(db_scan_region_lod_b.level == lod_level)
         .where(db_scan_region_a.id < db_scan_region_b.id)  # Avoid self-comparison and duplicates.
         .where(
-            ST_3DDWithin(db_scan_region_a.shape, db_scan_region_b.shape, epsilon)
+            ST_3DDWithin(db_scan_region_lod_a.shape, db_scan_region_lod_b.shape, epsilon)
             if epsilon is not None else
-            ST_3DIntersects(db_scan_region_a.shape, db_scan_region_b.shape)
+            ST_3DIntersects(db_scan_region_lod_a.shape, db_scan_region_lod_b.shape)
         )
     )
 
@@ -67,6 +65,13 @@ def main() -> None:
     parser.add_argument('scan',
         help="File name of the scan to analyze")
 
+    parser.add_argument('--lod',
+        type=int,
+        help=(
+            "The level of detail used for comparison, if not present, the native level of detail will be used if"
+            " present in the database."
+        ))
+
     parser.add_argument('--epsilon',
         type=float,
         help="Distance threshold, if present, use 'ST_3DDWithin' to compare regions, if not, use 'ST_3DIntersects'.")
@@ -75,7 +80,7 @@ def main() -> None:
 
     db = Session(get_engine())
 
-    find_intersecting_regions(db, args.scan, args.epsilon)
+    find_intersecting_regions(db, args.scan, args.lod, args.epsilon)
 
 
 if __name__ == "__main__":

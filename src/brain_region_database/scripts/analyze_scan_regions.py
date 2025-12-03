@@ -129,6 +129,7 @@ def collect_region_statistics(
             Point3D.from_array(min_bounding_box),
             Point3D.from_array(max_bounding_box),
         ),
+        lod_level=faces_limit,
         shape=(
             [tuple(row) for row in vertices],
             [tuple(row) for row in faces],

@@ -1,6 +1,7 @@
 import os
 
 from sqlalchemy import URL, Engine, create_engine
+from sqlalchemy.orm import Session
 
 from brain_region_database.util import read_environment_variable
 
@@ -20,3 +21,7 @@ def get_engine() -> Engine:
     debug_variable = os.environ.get('POSTGIS_DEBUG')
     echo = debug_variable == 'true' or debug_variable == '1'
     return create_engine(url, echo=echo)
+
+
+def get_engine_session() -> Session:
+    return Session(get_engine())

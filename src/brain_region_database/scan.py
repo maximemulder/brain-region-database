@@ -27,6 +27,7 @@ class ScanRegion(BaseModel):
     median_intensity: float
     centroid: Point3D
     bounding_box: tuple[Point3D, Point3D]
+    lod_level: int | None
     shape: tuple[list[tuple[float, float, float]], list[tuple[int, int, int]]]
 
 

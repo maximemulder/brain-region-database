@@ -6,10 +6,16 @@ import sys
 from pathlib import Path
 from typing import TextIO
 
-from sqlalchemy.orm import Session
-
-from brain_region_database.database.engine import get_engine
-from brain_region_database.database.query import insert_scan, select_scan
+from brain_region_database.database.engine import get_engine_session
+from brain_region_database.database.models import DBScanRegion
+from brain_region_database.database.queries import (
+    insert_scan,
+    insert_scan_region,
+    insert_scan_region_lod,
+    try_get_scan_region_lod_with_region_and_level,
+    try_get_scan_region_with_scan_and_name,
+    try_get_scan_with_name,
+)
 from brain_region_database.scan import Scan
 from brain_region_database.util import print_error_exit
 
@@ -38,23 +44,45 @@ def main() -> None:
             print_error_exit(f"File '{args.file}' not found.")
 
         with open(args.file) as file:
-            scan = read_scan_json(file)
+            scan_data = read_scan_json(file)
     else:
-        scan = read_scan_json(sys.stdin)
+        scan_data = read_scan_json(sys.stdin)
 
-    print(f"Loaded scan: {scan.file_name}")
-    print(f"Number of regions: {len(scan.regions)}")
+    print(f"Loaded scan: {scan_data.file_name}")
+    print(f"Number of regions: {len(scan_data.regions)}")
 
-    db = Session(get_engine())
+    db = get_engine_session()
 
-    if select_scan(db, scan.file_name) is not None:
-        print_error_exit(f"Scan '{scan.file_name}' is already inserted in the database.")
+    scan = try_get_scan_with_name(db, scan_data.file_name)
+    if scan is not None:
+        print(f"Scan '{scan.file_name}' already present in the database.")
+    else:
+        print("Inserting scan into the database...")
+        scan = insert_scan(db, scan_data)
+        print(f"Successfully inserted scan with ID: {scan.id}")
 
-    print("Inserting scan into database...")
+    regions: list[DBScanRegion] = []
+    for region_data in scan_data.regions:
+        region = try_get_scan_region_with_scan_and_name(db, scan, region_data.name)
+        if region is not None:
+            print(f"Region '{region.name}' already present in the database for that scan.")
+        else:
+            print("Inserting scan region into the database...")
+            region = insert_scan_region(db, scan, region_data)
+            print(f"Successfully inserted scan region with ID: {region.id}")
 
-    db_scan = insert_scan(db, scan)
+        regions.append(region)
 
-    print(f"Successfully inserted scan with ID: {db_scan.id}")
+    for region, region_data in zip(regions, scan_data.regions):
+        lod = try_get_scan_region_lod_with_region_and_level(db, region, region_data.lod_level)
+        if lod is not None:
+            print(f"Region LOD '{lod.region.name}' ('{lod.level}') already present in the database for that scan.")
+        else:
+            print("Inserting scan region LOD into the database...")
+            lod = insert_scan_region_lod(db, region, region_data)
+            print(f"Successfully inserted scan region LOD with ID: {lod.id}")
+
+    db.commit()
 
 
 if __name__ == '__main__':

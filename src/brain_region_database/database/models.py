@@ -23,9 +23,11 @@ class DBScan(Base):
 
 class DBScanRegion(Base):
     __tablename__ = 'scan_region'
+    __table_args__ = (
+        Index('idx_scan_region_scan_id_name', 'scan_id', 'name', unique=True),
+    )
+
     # __table_args__ = (
-    #     # Regular index for non-geometric columns
-    #     Index('idx_scan_region_scan_id_name', 'scan_id', 'name'),
     #     # Spatial indexes for geometric columns
     #     Index('idx_scan_region_centroid', 'centroid', postgresql_using='gist'),
     #     Index('idx_scan_region_shape', 'shape', postgresql_using='gist'),
@@ -48,7 +50,24 @@ class DBScanRegion(Base):
 
     # Geometric properties
     centroid : Mapped[Geometry] = mapped_column(Geometry('POINTZ', srid=4326))
-    shape    : Mapped[Geometry] = mapped_column(Geometry('POLYHEDRALSURFACEZ', srid=4326))
 
     # Relationships
     scan: Mapped['DBScan'] = relationship(init=False, back_populates='regions')
+    lods: Mapped['DBScanRegionLOD'] = relationship(init=False, back_populates='region')
+
+
+class DBScanRegionLOD(Base):
+    __tablename__ = 'scan_region_lod'
+    __table_args__ = (
+        Index('idx_scan_region_lod_region_level', 'region_id', 'level', unique=True),
+    )
+
+    id        : Mapped[int] = mapped_column(init=False, primary_key=True, autoincrement=True)
+    region_id : Mapped[int] = mapped_column(ForeignKey('scan_region.id'))
+    level     : Mapped[int | None]
+
+    # Geometric properties
+    shape     : Mapped[Geometry]   = mapped_column(Geometry('POLYHEDRALSURFACEZ', srid=4326))
+
+    # Relationships
+    region: Mapped['DBScanRegion'] = relationship(init=False, back_populates='lods')
