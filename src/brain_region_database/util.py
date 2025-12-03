@@ -2,6 +2,7 @@ import colorsys
 import os
 import random
 import sys
+from pathlib import Path
 from typing import Never
 
 type Color = tuple[int | float, int | float, int | float]
@@ -22,6 +23,19 @@ def read_environment_variable(name: str) -> str:
         return print_error_exit(f"Could not read environment variable '{name}'.")
 
     return value
+
+
+def get_full_output_path(output_path: Path, name: str) -> Path:
+    if not output_path.parent.is_dir():
+        print_error_exit(f"No parent directory found for path '{output_path}'.")
+
+    if output_path.is_dir():
+        output_path = output_path / name
+
+    if output_path.exists():
+        return print_error_exit(f"File or directory '{output_path}' already exists.")
+
+    return output_path
 
 
 def generate_random_colors(n: int) -> list[Color]:

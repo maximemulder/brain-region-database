@@ -13,7 +13,7 @@ from brain_region_database.process.orientation import reorient_nifti
 from brain_region_database.process.registration import register_nifti
 from brain_region_database.process.size import resize_nifti
 from brain_region_database.process.spatialization import respatialize_nifti
-from brain_region_database.util import print_error_exit
+from brain_region_database.util import get_full_output_path, print_error_exit
 
 
 def main() -> None:
@@ -124,22 +124,10 @@ def main() -> None:
         else:
             print(f"Image already uses the '{target_type}' data type. No conversion needed.")
 
-    nib.save(scan_image, get_full_output_path(output_path, scan_path.name))  # type: ignore
+    full_output_path = get_full_output_path(output_path, scan_path.name)
+    nib.save(scan_image, full_output_path)  # type: ignore
 
     print("Success!")
-
-
-def get_full_output_path(output_path: Path, name: Path) -> Path:
-    if not output_path.parent.is_dir():
-        print_error_exit(f"No parent directory found for path '{output_path}'.")
-
-    if output_path.is_dir():
-        output_path = output_path / name
-
-    if output_path.exists():
-        return print_error_exit(f"File or directory '{output_path}' already exists.")
-
-    return output_path
 
 
 if __name__ == '__main__':
