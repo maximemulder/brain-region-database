@@ -1,6 +1,6 @@
 # Find interseting regions
 
-Command: `find-intersecting-regions demo_587630_V1_t1_001.nii --lod X --epsilon 1`
+Command: `find-intersecting-regions demo_587630_V1_t1_001.nii --lod X --distance 1`
 
 ## No bounding box
 
@@ -28,7 +28,7 @@ Command: `find-intersecting-regions demo_587630_V1_t1_001.nii --lod X --epsilon 
 
 ### 100 faces
 
-- Timings: 7s, 7s,7s
+- Timings: 7s, 7s, 7s
 - Average: 7s
 
 ### 200 faces
@@ -43,5 +43,27 @@ Command: `find-intersecting-regions demo_587630_V1_t1_001.nii --lod X --epsilon 
 
 ### 1000 faces
 
-- Timings: 1179s, 1210s, 1242s
-- Average: 1210s
+- Timings: 659s, 611s, 645s
+- Average: 638s
+
+## 3D bounding box
+
+### 100 faces
+
+- Timings: 5s, 5s, 5s
+- Average: 5s
+
+### 200 faces
+
+- Timings: 17s, 18s, 18s
+- Average: 18s
+
+### 500 faces
+
+- Timings: 112s, 120s, 123s
+- Average: 118s
+
+### 1000 faces
+
+- Timings: 470s, 447s, 444s
+- Average: 454s

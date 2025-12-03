@@ -1,4 +1,4 @@
-maxime@Maxime-Laptop /s/H/C/C/brain-region-database (main)> find-intersecting-regions demo_587630_V1_t1_001.nii --lod 500 --epsilon 1 --box 2d && find-intersecting-regions demo_587630_V1_t1_001.nii --lod 500 --epsilon 1 --box 2d && find-intersecting-regions demo_587630_V1_t1_001.nii --lod 500 --epsilon 1 --box 2d
+maxime@Maxime-Laptop /s/H/C/C/brain-region-database (main)> find-intersecting-regions demo_587630_V1_t1_001.nii --lod 500 --box 2d --distance 1 && find-intersecting-regions demo_587630_V1_t1_001.nii --lod 500 --box 2d --distance 1 && find-intersecting-regions demo_587630_V1_t1_001.nii --lod 500 --box 2d --distance 1
 Connecting to the database...
 Query: 0.74 ms
 Found scan: 'demo_587630_V1_t1_001.nii' (ID: 1)

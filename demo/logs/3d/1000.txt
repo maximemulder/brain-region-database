@@ -1,12 +1,12 @@
-maxime@Maxime-Laptop /s/H/C/C/brain-region-database (main)  find-intersecting-regions demo_587630_V1_t1_001.nii --lod 1000 --distance 1 && find-intersecting-regions demo_587630_V1_t1_001.nii --lod 1000 --distance 1 && find-intersecting-regions demo_587630_V1_t1_001.nii --lod 1000 --distance 1
+maxime@Maxime-Laptop /s/H/C/C/brain-region-database (main)> find-intersecting-regions demo_587630_V1_t1_001.nii --lod 1000 --distance 1 --box 3d && find-intersecting-regions demo_587630_V1_t1_001.nii --lod 1000 --distance 1 --box 3d && find-intersecting-regions demo_587630_V1_t1_001.nii --lod 1000 --distance 1 --box 3d
 Connecting to the database...
-Query: 1.03 ms
+Query: 1.12 ms
 Found scan: 'demo_587630_V1_t1_001.nii' (ID: 1)
-Query: 7.50 ms
+Query: 8.49 ms
 Found 51 regions for scan 'demo_587630_V1_t1_001.nii'.
-Query: 19.11 ms
+Query: 23.01 ms
 Found 51 regions LOD for scan 'demo_587630_V1_t1_001.nii' and LOD level 1000.
-Query: 1179146.39 ms
+Query: 470003.20 ms
 Found 162 intersecting region pairs:
   Caudal Anterior Cingulate (ID: 1) <-> Posterior Cingulate (ID: 21)
   Caudal Anterior Cingulate (ID: 1) <-> Rostral Anterior Cingulate (ID: 24)
@@ -171,13 +171,13 @@ Found 162 intersecting region pairs:
   Vermal lobules I-V (ID: 49) <-> Vermal lobules VIII-X (ID: 51)
   Vermal lobules VI-VII (ID: 50) <-> Vermal lobules VIII-X (ID: 51)
 Connecting to the database...
-Query: 0.85 ms
+Query: 0.62 ms
 Found scan: 'demo_587630_V1_t1_001.nii' (ID: 1)
-Query: 7.06 ms
+Query: 7.25 ms
 Found 51 regions for scan 'demo_587630_V1_t1_001.nii'.
-Query: 18.82 ms
+Query: 19.09 ms
 Found 51 regions LOD for scan 'demo_587630_V1_t1_001.nii' and LOD level 1000.
-Query: 1209890.81 ms
+Query: 447446.29 ms
 Found 162 intersecting region pairs:
   Caudal Anterior Cingulate (ID: 1) <-> Posterior Cingulate (ID: 21)
   Caudal Anterior Cingulate (ID: 1) <-> Rostral Anterior Cingulate (ID: 24)
@@ -342,13 +342,13 @@ Found 162 intersecting region pairs:
   Vermal lobules I-V (ID: 49) <-> Vermal lobules VIII-X (ID: 51)
   Vermal lobules VI-VII (ID: 50) <-> Vermal lobules VIII-X (ID: 51)
 Connecting to the database...
-Query: 0.78 ms
+Query: 0.66 ms
 Found scan: 'demo_587630_V1_t1_001.nii' (ID: 1)
-Query: 17.85 ms
+Query: 6.47 ms
 Found 51 regions for scan 'demo_587630_V1_t1_001.nii'.
-Query: 17.93 ms
+Query: 17.65 ms
 Found 51 regions LOD for scan 'demo_587630_V1_t1_001.nii' and LOD level 1000.
-Query: 1242033.84 ms
+Query: 444414.98 ms
 Found 162 intersecting region pairs:
   Caudal Anterior Cingulate (ID: 1) <-> Posterior Cingulate (ID: 21)
   Caudal Anterior Cingulate (ID: 1) <-> Rostral Anterior Cingulate (ID: 24)
