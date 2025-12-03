@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session as Database
 from sqlalchemy.orm import aliased
 
 from brain_region_database.database.engine import get_engine_session
-from brain_region_database.database.models import DBScan, DBScanRegion, DBScanRegionLOD
+from brain_region_database.database.models import DBRegion, DBScan, DBScanRegionLOD
 from brain_region_database.database.monitor import DatabaseMonitor
 from brain_region_database.database.queries import get_scan_regions_lod_with_scan_and_level
 from brain_region_database.util import print_error_exit
@@ -40,8 +40,8 @@ def find_intersecting_regions(db: Database, scan_file_name: str, lod_level: int 
 
     print(f"Found {len(region_lods)} regions LOD for scan '{scan.file_name}' and LOD level {lod_level}.")
 
-    db_scan_region_a = aliased(DBScanRegion)
-    db_scan_region_b = aliased(DBScanRegion)
+    db_scan_region_a = aliased(DBRegion)
+    db_scan_region_b = aliased(DBRegion)
     db_scan_region_lod_a = aliased(DBScanRegionLOD)
     db_scan_region_lod_b = aliased(DBScanRegionLOD)
 
@@ -52,13 +52,11 @@ def find_intersecting_regions(db: Database, scan_file_name: str, lod_level: int 
             db_scan_region_b.id.label('region_b_id'),
             db_scan_region_b.name.label('region_b'),
         )
-        .select_from(DBScan)
-        .join(db_scan_region_a, db_scan_region_a.scan_id == DBScan.id)
-        .join(db_scan_region_b, db_scan_region_b.scan_id == DBScan.id)
+        .select_from(db_scan_region_a, db_scan_region_b)
         .join(db_scan_region_lod_a, db_scan_region_lod_a.region_id == db_scan_region_a.id)
         .join(db_scan_region_lod_b, db_scan_region_lod_b.region_id == db_scan_region_b.id)
         .where(
-            DBScan.id == scan.id,
+            db_scan_region_lod_a.scan == scan,
             db_scan_region_a.id < db_scan_region_b.id,  # Avoid self-comparison and duplicates.
             db_scan_region_lod_a.level == lod_level,
             db_scan_region_lod_b.level == lod_level,

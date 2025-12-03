@@ -10,19 +10,19 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session as Database
 
 from brain_region_database.database.engine import get_engine_session
-from brain_region_database.database.models import DBScanRegion, DBScanRegionLOD
-from brain_region_database.database.queries import try_get_scan_with_file_name
+from brain_region_database.database.models import DBRegion, DBScanRegionLOD
+from brain_region_database.database.queries import try_get_scan
 from brain_region_database.util import generate_random_colors, print_error_exit
 
 
-def visualize_database_scan(db: Database, file_name: str, lod_level: int | None):
-    scan = try_get_scan_with_file_name(db, file_name)
+def visualize_database_regions(db: Database, file_name: str, lod_level: int | None):
+    scan = try_get_scan(db, file_name)
     if scan is None:
         return print_error_exit(f"No scan type with file name '{file_name}' found.")
 
-    results: list[str] = list(db.execute(select(DBScanRegion.name, ST_AsText(DBScanRegionLOD.shape))  # type: ignore
+    results: list[str] = list(db.execute(select(DBRegion.name, ST_AsText(DBScanRegionLOD.shape))  # type: ignore
         .join(DBScanRegionLOD.region)
-        .where(DBScanRegion.scan == scan)
+        .where(DBScanRegionLOD.scan == scan)
         .where(DBScanRegionLOD.level == lod_level)
     ).all())
 
@@ -114,7 +114,7 @@ def main() -> None:
 
     db = get_engine_session()
 
-    visualize_database_scan(db, args.scan, args.lod)
+    visualize_database_regions(db, args.scan, args.lod)
 
 
 if __name__ == '__main__':

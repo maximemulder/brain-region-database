@@ -1,9 +1,12 @@
+from typing import Literal
+
 from geoalchemy2 import Geometry
-from sqlalchemy import ForeignKey, Index
+from sqlalchemy import ForeignKey, ForeignKeyConstraint, Index
 from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, mapped_column, relationship
 
+type Laterality = Literal['L', 'R']
 
-# SQLAlchemy Models
+
 class Base(DeclarativeBase, MappedAsDataclass):
     pass
 
@@ -21,26 +24,30 @@ class DBScan(Base):
     regions: Mapped[list['DBScanRegion']] = relationship(init=False, back_populates='scan')
 
 
+class DBRegion(Base):
+    __tablename__ = 'region'
+
+    id          : Mapped[int] = mapped_column(init=False, primary_key=True, autoincrement=True)
+    name        : Mapped[str]
+    laterality  : Mapped[Laterality | None]
+    atlas_value : Mapped[int]
+
+    # Relationships
+    scans: Mapped[list['DBScanRegion']] = relationship(init=False, back_populates='region')
+
+
 class DBScanRegion(Base):
     __tablename__ = 'scan_region'
     __table_args__ = (
-        Index('idx_scan_region_scan_id_name', 'scan_id', 'name', unique=True),
+        Index('idx_scan_region_scan_id_region_id', 'scan_id', 'region_id', unique=True),
     )
 
-    # __table_args__ = (
-    #     # Spatial indexes for geometric columns
-    #     Index('idx_scan_region_centroid', 'centroid', postgresql_using='gist'),
-    #     Index('idx_scan_region_shape', 'shape', postgresql_using='gist'),
-    # )
+    # Keys
+    id        : Mapped[int] = mapped_column(init=False, primary_key=True, autoincrement=True)
+    scan_id   : Mapped[int] = mapped_column(ForeignKey('scan.id'))
+    region_id : Mapped[int] = mapped_column(ForeignKey('region.id'))
 
-    id      : Mapped[int] = mapped_column(init=False, primary_key=True, autoincrement=True)
-    scan_id : Mapped[int] = mapped_column(ForeignKey('scan.id'))
-
-    # Region atlas properties
-    name  : Mapped[str] = mapped_column(index=True)
-    value : Mapped[int]
-
-    # Region numeric properties
+    # Numeric properties
     voxel_count      : Mapped[int]
     mean_intensity   : Mapped[float]
     std_intensity    : Mapped[float]
@@ -49,25 +56,32 @@ class DBScanRegion(Base):
     median_intensity : Mapped[float]
 
     # Geometric properties
-    centroid : Mapped[Geometry] = mapped_column(Geometry('POINTZ', srid=4326))
+    centroid: Mapped[Geometry] = mapped_column(Geometry('POINTZ', srid=0, use_N_D_index=True))
 
     # Relationships
-    scan: Mapped['DBScan'] = relationship(init=False, back_populates='regions')
-    lods: Mapped['DBScanRegionLOD'] = relationship(init=False, back_populates='region')
+    scan   : Mapped['DBScan']   = relationship(init=False, back_populates='regions')
+    region : Mapped['DBRegion'] = relationship(init=False, back_populates='scans')
 
 
 class DBScanRegionLOD(Base):
     __tablename__ = 'scan_region_lod'
     __table_args__ = (
-        Index('idx_scan_region_lod_region_level', 'region_id', 'level', unique=True),
+        Index('idx_scan_region_lod_scan_id_region_id_lod', 'scan_id', 'region_id', 'level', unique=True),
+        ForeignKeyConstraint(
+            ['scan_id', 'region_id'],
+            ['scan_region.scan_id', 'scan_region.region_id']
+        ),
     )
 
+    # Keys
     id        : Mapped[int] = mapped_column(init=False, primary_key=True, autoincrement=True)
-    region_id : Mapped[int] = mapped_column(ForeignKey('scan_region.id'))
+    scan_id   : Mapped[int] = mapped_column(ForeignKey('scan.id'))
+    region_id : Mapped[int] = mapped_column(ForeignKey('region.id'))
     level     : Mapped[int | None]
 
     # Geometric properties
-    shape     : Mapped[Geometry]   = mapped_column(Geometry('POLYHEDRALSURFACEZ', srid=4326))
+    shape: Mapped[Geometry] = mapped_column(Geometry('POLYHEDRALSURFACEZ', srid=0, use_N_D_index=True))
 
     # Relationships
-    region: Mapped['DBScanRegion'] = relationship(init=False, back_populates='lods')
+    scan   : Mapped['DBScan']   = relationship(init=False)
+    region : Mapped['DBRegion'] = relationship(init=False)
