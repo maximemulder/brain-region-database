@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session as Database
 from sqlalchemy.sql.expression import func
 
-from brain_region_database.database.conversions import create_point, create_postgis_3d_geometry
+from brain_region_database.database.geometries import create_point, create_postgis_3d_geometry
 from brain_region_database.database.models import DBRegion, DBScan, DBScanRegion, DBScanRegionLOD
 from brain_region_database.scan import Scan, ScanRegion
 

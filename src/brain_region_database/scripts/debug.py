@@ -5,7 +5,7 @@ import re
 import numpy as np
 import pyvista as pv
 
-from brain_region_database.database.conversions import create_postgis_3d_geometry
+from brain_region_database.database.geometries import create_postgis_3d_geometry
 from brain_region_database.scripts.insert_scan import read_scan_json
 
 
