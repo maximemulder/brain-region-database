@@ -1,22 +1,25 @@
 #!/usr/bin/env python
 
 import argparse
+import json
 from pathlib import Path
 
-import nibabel as nib
-from nibabel.nifti1 import Nifti1Image
+import numpy as np
 
-from brain_region_database.atlas import load_atlas_dictionary, print_atlas_regions
-from brain_region_database.nifti import has_same_dims, load_nifti_image, resample_to_same_dims
-from brain_region_database.util import print_error_exit
+from brain_region_database.atlas import AtlasRegion, load_atlas_dictionary, print_atlas_regions
+from brain_region_database.nifti import NDArray3, NiftiImage, ants_to_nib, get_voxel_size, nib_to_ants, load_nifti_image
+from brain_region_database.process.registration import register_nifti
+from brain_region_database.process.vectorization import compute_nifti_mask_mesh
+from brain_region_database.scan import Point3D, Scan, ScanRegion
 
 # ruff: noqa
-# extract-scan-regions --atlas-image ../atlases/mni_icbm152_nlin_sym_09c_CerebrA_nifti/mni_icbm152_CerebrA_tal_nlin_sym_09c.nii --atlas-dictionary ../atlases/mni_icbm152_nlin_sym_09c_CerebrA_nifti/CerebrA_LabelDetails.csv --scan ../../COMP5411/demo_587630_V1_t1_001.nii
+# analyze-scan-regions --atlas-image ../atlases/mni_icbm152_nlin_sym_09c_CerebrA_nifti/mni_icbm152_CerebrA_tal_nlin_sym_09c.nii --atlas-dictionary ../atlases/mni_icbm152_nlin_sym_09c_CerebrA_nifti/CerebrA_LabelDetails.csv --scan ../../COMP5411/demo_587630_V1_t1_001.nii
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog='extract_scan_regions',
-        description="Extract the different regions of a NIfTI file using a brain atlas.",
+        prog='extract_brain_regions',
+        description="Extract regions information of a NIfTI file using a brain atlas.",
     )
 
     parser.add_argument('--atlas-dictionary',
@@ -31,53 +34,107 @@ def main() -> None:
         required=True,
         help="The brain scan NIfTI image.")
 
-    parser.add_argument('--output-dir',
-        required=True,
-        help="The output directory in which to write the region files.")
+    parser.add_argument('--lod',
+        type=int,
+        help="Maximum number of faces per region meshes.")
+
+    parser.add_argument('--output',
+        type=Path,
+        help="Print the scan information JSON in a file instead of the console.")
 
     args = parser.parse_args()
 
-    atlas_dictionary = load_atlas_dictionary(Path(args.atlas_dictionary))
-    atlas_image      = load_nifti_image(Path(args.atlas_image))
-    scan_image       = load_nifti_image(Path(args.scan))
-    output_dir_path  = Path(args.output_dir)
+    atlas_dictionary_path = Path(args.atlas_dictionary)
+    atlas_image_path      = Path(args.atlas_image)
+    scan_path             = Path(args.scan)
+
+    atlas_dictionary = load_atlas_dictionary(atlas_dictionary_path)
+    atlas_image      = load_nifti_image(atlas_image_path)
+    scan_image       = load_nifti_image(scan_path)
 
     print_atlas_regions(atlas_dictionary)
 
-    if not has_same_dims(scan_image, atlas_image):
-        print("Resampling atlas to the image space.")
-        atlas_image = resample_to_same_dims(atlas_image, scan_image, 'nearest')
-    else:
-        print("Atlas is already in the image space.")
+    atlas_image = ants_to_nib(register_nifti(
+        nib_to_ants(atlas_image),
+        nib_to_ants(scan_image),
+        'nearest',
+    ))
 
-    if not output_dir_path.exists():
-        if not output_dir_path.parent.exists():
-            print_error_exit(f"Parent directory '{output_dir_path.parent}' does not exist.")
-        output_dir_path.mkdir(exist_ok=True)
-    else:
-        if not output_dir_path.is_dir():
-            print_error_exit(f"Path '{output_dir_path}' exists but is not a directory.")
+    atlas_data: NDArray3[np.float32] = atlas_image.get_fdata()
+    scan_data:  NDArray3[np.float32] = scan_image.get_fdata()
 
-    atlas_data = atlas_image.get_fdata()
-    scan_data  = scan_image.get_fdata()
+    regions: list[ScanRegion] = []
 
     for region in atlas_dictionary.regions:
         print(f"Processing region '{region.name}' ({region.value})")
 
-        # Create the mask for this region.
-        region_mask = (atlas_data == region.value)
+        regions.append(collect_region_statistics(atlas_image, region, atlas_data, scan_data, args.lod))
 
-        # Apply the mask to the scan data.
-        region_data = scan_data * region_mask
+    scan = Scan(
+        file_name=scan_path.name,
+        file_size=scan_path.stat().st_size,
+        dimensions=f"{scan_data.shape[0]}x{scan_data.shape[1]}x{scan_data.shape[2]}",
+        voxel_size=get_voxel_size(scan_image),
+        regions=regions
+    )
 
-        # Create a new NIfTI image with the region data.
-        region_nifti = Nifti1Image(region_data, scan_image.affine, scan_image.header)  # type: ignore
+    # Convert the scan object to JSON.
+    scan_json = json.dumps(scan.model_dump(), indent=4)
 
-        # Save the region as a NIfTI file.
-        region_path = output_dir_path / f"{region.name}.nii"
-        nib.save(region_nifti, region_path)  # type: ignore
+    if args.output:
+        print(f"Writing scan information to '{args.output}'.")
+        with open(args.output, 'w') as f:
+            f.write(scan_json)
+    else:
+        print(scan_json)
 
-    print("Success!")
+
+
+def collect_region_statistics(
+    original: NiftiImage,
+    region: AtlasRegion,
+    atlas_data: NDArray3[np.float32],
+    scan_data: NDArray3[np.float32],
+    faces_limit: int | None,
+) -> ScanRegion:
+    # Create the mask of the region.
+    region_mask = (atlas_data == region.value)
+
+    # Get coordinates of the region
+    region_coordinates = np.argwhere(region_mask)
+
+    # Apply the region mask to the scan data.
+    region_scan_data = scan_data[region_mask]
+
+    # Compute centroid.
+    centroid = np.mean(region_coordinates, axis=0)
+
+    # Compute bounding box.
+    min_bounding_box = np.min(region_coordinates, axis=0).astype(int)
+    max_bounding_box = np.max(region_coordinates, axis=0).astype(int)
+
+    vertices, faces = compute_nifti_mask_mesh(original, region_mask, faces_limit)
+
+    return ScanRegion(
+        name=region.name,
+        value=region.value,
+        voxel_count=np.sum(region_mask).item(),
+        mean_intensity=np.mean(region_scan_data).item(),
+        std_intensity=np.std(region_scan_data).item(),
+        min_intensity=np.min(region_scan_data).item(),
+        max_intensity=np.max(region_scan_data).item(),
+        median_intensity=np.median(region_scan_data).item(),
+        centroid=Point3D.from_array(centroid),
+        bounding_box=(
+            Point3D.from_array(min_bounding_box),
+            Point3D.from_array(max_bounding_box),
+        ),
+        lod_level=faces_limit,
+        shape=(
+            [tuple(row) for row in vertices],
+            [tuple(row) for row in faces],
+        ),
+    )
 
 
 if __name__ == '__main__':

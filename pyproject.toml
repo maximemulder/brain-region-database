@@ -27,9 +27,9 @@ dev = [
 ]
 
 [project.scripts]
-analyze-scan-regions       = "brain_region_database.scripts.analyze_scan_regions:main"
 create-database            = "brain_region_database.scripts.create_database:main"
 extract-scan-regions       = "brain_region_database.scripts.extract_scan_regions:main"
+filter-scan-regions        = "brain_region_database.scripts.filter_scan_regions:main"
 find-intersecting-regions  = "brain_region_database.scripts.find_intersecting_regions:main"
 insert-scan                = "brain_region_database.scripts.insert_scan:main"
 patch-scan                 = "brain_region_database.scripts.patch_scan:main"
