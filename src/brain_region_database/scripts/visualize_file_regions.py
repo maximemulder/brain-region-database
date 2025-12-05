@@ -39,7 +39,14 @@ def visualize_file_regions(scan_data: Scan):
 
         # Add mesh to plotter.
         mesh = pv.PolyData(vertices_array, faces_array)
-        plotter.add_mesh(mesh, color=color)  # type: ignore
+        plotter.add_mesh(mesh, label=region_data.name, color=color)  # type: ignore
+
+    plotter.add_legend(  # type: ignore
+        bcolor=(0, 0, 0, 0.5),
+        face='rectangle',
+        loc='upper left',
+        size=(0.2, 0.8),
+    )
 
     plotter.show()  # type: ignore
 

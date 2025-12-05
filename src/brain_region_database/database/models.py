@@ -44,8 +44,8 @@ class DBScanRegion(Base):
 
     # Keys
     id        : Mapped[int] = mapped_column(init=False, primary_key=True, autoincrement=True)
-    scan_id   : Mapped[int] = mapped_column(ForeignKey('scan.id'))
-    region_id : Mapped[int] = mapped_column(ForeignKey('region.id'))
+    scan_id   : Mapped[int] = mapped_column(ForeignKey('scan.id'), index=True)
+    region_id : Mapped[int] = mapped_column(ForeignKey('region.id'), index=True)
 
     # Numeric properties
     voxel_count      : Mapped[int]
@@ -75,8 +75,8 @@ class DBScanRegionLOD(Base):
 
     # Keys
     id        : Mapped[int] = mapped_column(init=False, primary_key=True, autoincrement=True)
-    scan_id   : Mapped[int] = mapped_column(ForeignKey('scan.id'))
-    region_id : Mapped[int] = mapped_column(ForeignKey('region.id'))
+    scan_id   : Mapped[int] = mapped_column(ForeignKey('scan.id'), index=True)
+    region_id : Mapped[int] = mapped_column(ForeignKey('region.id'), index=True)
     level     : Mapped[int | None]
 
     # Geometric properties
