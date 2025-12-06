@@ -86,7 +86,7 @@ extract-scan-regions \
   --atlas-image demo/atlases/mni_icbm152_CerebrA_tal_nlin_sym_09c.nii \
   --atlas-dictionary demo/atlases/CerebrA_LabelDetails.csv \
   --scan demo/scans/demo_587630_V1_t1_001.nii \
-  --lod 500 \
+  --lod 200 \
   --output regions.json
 ```
 
@@ -100,7 +100,7 @@ extract-scan-regions \
 The following command can be used to insert a scan regions information from a JSON in the database.
 
 ```sh
-insert-scan demo/regions/demo_587630_V1_t1_001_regions_500.json
+insert-scan demo/regions/demo_587630_V1_t1_001_regions_200.json
 ```
 
 Some extracted regions are provided already extracted as part of the repository in the `demo/regions` directory.
@@ -111,13 +111,13 @@ The following command can be used to query the pairs of intersecting regions wit
 
 ```sh
 find-intersecting-regions demo_587630_V1_t1_001.nii \
-  --lod 100 \
+  --lod 200 \
   --box 3d \
   --intersect \
   --distance 1.5
 ```
 
-- The first argument is the file name of the scan whoses region are queried (just the name when it was inserted, not the full path).
+- The first argument is the file name of the scan whose region are queried (just the name when it was inserted, not the full path).
 - (recommended) The `lod` argument is the level of details of the regions that were inserted. Note that a single scan can have regions inserted at several LODs.
 - (optional) The `box` argument instructs to intersect the regions bounding boxes. Possible values are `2d` and `3d`.
 - (optional) The `intersect` argument instructs to intersects the regions using `ST_3DIntersects`.
@@ -156,7 +156,7 @@ SELECT
 FROM scan_region_lod srl
   JOIN region r ON srl.region_id = r.id
   JOIN scan s ON srl.scan_id = s.id
-WHERE srl.level = 100
+WHERE srl.level = 200
   AND s.file_name = 'demo_587630_V1_t1_001.nii'
 ORDER BY CG_Volume(srl.shape::box3d) DESC;
 ```
