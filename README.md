@@ -164,7 +164,7 @@ ORDER BY CG_Volume(srl.shape::box3d) DESC;
 SFCGAL can be enabled using the following command (works in Docker, untested in local database):
 
 ```sql
-CREATE EXTENSION IF NOT EXISTS postgis_sfgcal;
+CREATE EXTENSION IF NOT EXISTS postgis_sfcgal;
 ```
 
 ## Demonstration files
